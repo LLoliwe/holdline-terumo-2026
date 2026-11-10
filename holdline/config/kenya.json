@@ -1,0 +1,14 @@
+{
+  "country": "KE",
+  "language": "en",
+  "timezone_label": "EAT",
+  "fridge_components": ["RBC", "WB", "PLT"],
+  "fridge_max_c": 6.0,
+  "fridge_min_c": 2.0,
+  "persist_hours": 2,
+  "coolbox_max_c": 10.0,
+  "glitch_values": [-99.0, 99.9, 0.0],
+  "gap_hours_alert": 3,
+  "sms_max_chars": 160,
+  "second_signature_for_release": true
+}
