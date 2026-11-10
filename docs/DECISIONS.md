@@ -38,3 +38,10 @@
 - **What:** feature/senior-depth (a4bd8ce) merged into main as 0f64f05. Previous main: 8fc1b07.
 - **Evidence after merge (fresh clone of 0f64f05):** with the starter dataset, `python3 -m unittest discover -s tests` = 92 OK; without data 91 OK, 1 skipped; `bun test ./tests/test_overview.js` = 6 pass, 0 fail.
 - **Reproduce:** `git checkout 0f64f05 && python3 -m unittest discover -s tests && bun test ./tests/test_overview.js`.
+
+## 2026/11/10 23:25 SAST: Merge ui/explain-line into main
+- **Decided by:** Lebohang Loliwe approved the change at 23:10 and gave standing approval for reviewed, tested HOLDLINE merges until 05:00.
+- **What:** ui/explain-line (f94fe33) merged as 5d93b06. The case screen adds one "Why this hold" line (rule, measured or presumed, main uncertainty) from the server's `explain` data, using the existing `why` paragraph style; no new CSS, layout, colour or font. Service worker cache bumped holdline-v48 to holdline-v49 so installed devices pick up the new app.js; the activate step deletes every other cache.
+- **Review:** 2 files, 7 lines added, 1 changed. All server text is passed through `esc()` (checked with an `<img onerror>` payload, which renders as text). Cases cached offline before this change have no `explain` and render no line rather than an error (checked).
+- **Evidence after merge (fresh clone of 5d93b06):** with the starter dataset 92 OK; without data 91 OK, 1 skipped; `bun test ./tests/test_overview.js` = 6 pass. app.js and sw.js parse (`bun build`). Not checked: a screenshot in a real browser (no browser in the review sandbox); confirm on screen while filming.
+- **Reproduce:** `git checkout 5d93b06 && python3 -m unittest discover -s tests && bun test ./tests/test_overview.js`.
