@@ -277,3 +277,12 @@ td.c-unit{white-space:normal;min-width:200px}
 .decidebar{display:none}
 
 @media (prefers-reduced-motion:reduce){.toast,.btn,.list .row{transition:none}.btn:active:not(:disabled){transform:none}}
+/* loading skeleton, shown only when a case takes longer than 300 ms */
+.skel{padding:24px 28px;display:grid;gap:12px;max-width:1100px}
+.skel i{display:block;border-radius:6px;background:linear-gradient(90deg,#E6E4DC 0,#F3F2EC 40%,#E6E4DC 80%);background-size:300% 100%;animation:shimmer 1.1s linear infinite}
+.skel .s1{width:140px;height:22px}.skel .s2{width:min(520px,80%);height:30px}.skel .s3{width:min(680px,90%);height:16px}
+.skel .sg{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.skel .sg i{height:62px}
+.skel .sb{display:grid;grid-template-columns:1fr 320px;gap:16px}.skel .sc{height:280px}.skel .sd{height:200px}
+@keyframes shimmer{to{background-position:-300% 0}}
+@media (prefers-reduced-motion:reduce){.skel i{animation:none}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

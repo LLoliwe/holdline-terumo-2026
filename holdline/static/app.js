@@ -205,6 +205,12 @@ narrow.addEventListener("change", route);
 function paintOverview() {
   const el = $("#case"), rows = state.status === "OPEN" ? state.rows : [], s = state.summary;
   state.sel = null; state.data = null; caseSeq++; markRows();
+  // Seam: an overview module (overview.js) may define window.HoldlineOverview.render(mount, ctx) to own the landing view.
+  // ctx = {rows, summary, open(id)}; rows are the open cases as listed in the queue. It must not decide anything.
+  if (window.HoldlineOverview && typeof window.HoldlineOverview.render === "function") {
+    el.innerHTML = `<div id="overview-mount" class="overview-mount"></div>`;
+    try { window.HoldlineOverview.render($("#overview-mount"), {rows, summary: s, open: go}); return; } catch (e) { console.error(e); }
+  }
   if (!rows.length) { el.innerHTML = `<div class="empty">Pick a hold from the queue.</div>`; return; }
   const oldest = rows.reduce((a, c) => c.start < a.start ? c : a), biggest = rows.reduce((a, c) => c.n > a.n ? c : a);
   const gaps = rows.filter(c => c.kind !== "EXCURSION"), hot = rows.filter(c => c.kind === "EXCURSION" && c.peak >= 10);
@@ -224,14 +230,20 @@ function paintOverview() {
 
 // ── case: latest request wins; superseded requests are aborted and ignored ───────────────────────
 let caseSeq = 0, caseCtl = null;
+const SKELETON = `<div class="skel" aria-hidden="true"><i class="s1"></i><i class="s2"></i><i class="s3"></i><div class="sg"><i></i><i></i><i></i><i></i><i></i></div><div class="sb"><i class="sc"></i><i class="sd"></i></div></div><p class="sr-only">Loading the hold…</p>`;
 async function openCase(id) {
   const my = ++caseSeq;
   if (caseCtl) caseCtl.abort();
   caseCtl = typeof AbortController === "function" ? new AbortController() : null;
   state.sel = id; markRows();
   const el = $("#case");
-  if (!state.data || state.data.case.id !== id) el.setAttribute("aria-busy", "true");
+  let skel = null;
+  if (!state.data || state.data.case.id !== id) {
+    el.setAttribute("aria-busy", "true");
+    skel = setTimeout(() => { if (my === caseSeq) el.innerHTML = SKELETON; }, 300);  // only on a slow network, so normal opens never flash
+  }
   const r = await api("/api/case/" + encodeURIComponent(id), {headers: auth(), signal: caseCtl && caseCtl.signal});
+  clearTimeout(skel);
   if (my !== caseSeq || r.aborted) return;
   el.removeAttribute("aria-busy");
   if (!r.data || r.data.error) { state.data = null; el.innerHTML = r.cached ? `<div class="empty offline"><h2>Offline, and this case is not saved on this device</h2><p>Its units stay on hold. Open it again when the connection returns, or pick a case opened earlier on this device.</p></div>` : `<div class="empty">${esc((r.data && r.data.error) || "Not found")}</div>`; return; }
@@ -422,6 +434,8 @@ async function decide(d, kind) {
   if (r.cached) { setQ([...Q(), {...body, second_pin: null, _auth: auth(), _user: me.user}]); delete state.drafts[c.id]; renderCase(d); toast("Offline. Decision saved on this device; it syncs when the connection returns. Units stay on hold until then."); return; }
   if (!r.ok) { dr.confirm = null; dr.frozen = null; lockTicks(false); repaintDecision(d); return msg(r.data.error); }
   delete state.drafts[c.id];
+  // Optimistic for the queue only: the server already recorded the decision; the row leaves Open now, the full refresh follows.
+  if (state.status === "OPEN") { state.rows = state.rows.filter(x => x.id !== c.id); paintList(); }
   toast(kind === "ACCEPT" ? `Accepted. All ${fmt(d.units.length)} units stay quarantined.` : `${kind === "CHANGE" ? "Changed" : "Rejected"}. Decision recorded.`);
   await refresh();
 }

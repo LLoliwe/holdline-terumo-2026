@@ -49,6 +49,28 @@ No package dependency is added; the only third-party additions are four Tabler i
 | Every click re-fetched and rebuilt the whole queue | Extra request and DOM work per click | Selection only toggles classes; the queue is fetched once per status |
 | Chart axis followed the readings | A silent logger made the line shorter instead of showing missing time | Fixed 48-hour axis with hatched, labelled "no readings" spans; "hours with no reading" in the evidence row |
 
+## Praised patterns and what they changed here
+
+Only behaviours were borrowed, rebuilt in plain JavaScript and CSS with no package added. Sources were the entrant's own X likes and saves first, then widely starred open-source projects.
+
+| Praised pattern (where people praise it) | Change in HOLDLINE | Why it fits this tool |
+|---|---|---|
+| Command menu: cmdk (MIT, ~10k stars), Linear and Raycast | `Ctrl K` / `⌘ K` opens a menu: type part of a facility, county or case id to jump to any of the 412 holds, or run an action (filters, evaluation, sign in, shortcuts). Subsequence matching ranks word starts and runs higher. | An officer with a phone call open needs one hold by name, fast, without scrolling. |
+| Keyboard triage: Linear `j`/`k`, `Esc`, `/` | Walk the queue with `j`/`k` while the case previews beside it. | Ten holds reviewed without touching the mouse. |
+| Toasts: Sonner (MIT) | Stacked at the bottom, newest on top, pause on hover or focus, close button, errors announced assertively and kept longer. | Confirmations stay quiet; refusals are not missed. |
+| Bottom sheets: Vaul (MIT) | On phones, a thumb-reach "Decide this hold" bar brings the decision panel into view. A full sheet with swipe is in a parallel phone branch. | The decision sits far down a phone page. |
+| Skeletons (Vercel, Linear) | A case skeleton appears only when loading takes longer than 300 ms. | No flashing on fast opens (measured: a 120 ms threshold added a 50 ms long task in the benchmark, so it was raised). |
+| Optimistic queue (Linear) | After the server records a decision, the row leaves the Open list at once and the full refresh follows. The decision itself is never shown as done before the server confirms it. | Feels instant without pretending. |
+| Press feedback and focus rings (design-engineering demos praised on X) | 80 ms press scale on buttons, a 2 px focus ring everywhere, all motion off under reduced motion. | Physical feedback without decoration. |
+
+Rejected after the same filter: View Transitions cross-fade (slowed opens from about 20 ms to about 130 ms), WebGPU shader effects (GPU load, distraction), React component kits (Animate UI, HorizonX, Bencho, Cue: runtime or unclear licence), and small anomaly-explanation models from Hugging Face (the reasons here come from the rules themselves, so a model would add a second, less checkable explanation).
+
+## Integration seams for parallel branches
+
+- **Landing overview**: if `overview.js` defines `window.HoldlineOverview.render(mount, {rows, summary, open})`, the landing view renders into `#overview-mount`; otherwise the built-in overview shows. It must not decide anything; `open(id)` opens a case through the normal path.
+- **Evidence chart**: `chart.js` exposes `chart(readings, start, end, kind)`, `wireChart()` and `readingsTable(readings, case)`; the case view mounts it in `#chart-mount`.
+- **Phone layout**: rules for 760 px and below live in `phone.css`, loaded after `app.css`.
+
 ## Release confirmation integrity (found in review of f43439f and 6ba89fb, fixed)
 
 The confirmation sentence used to be drawn from the ticks at that moment while Confirm sent whatever was ticked later, and the boxes stayed live. Reproduced on this branch before the fix: the screen said "Release 1 unit", the request carried 2 units, and the server released 2.
