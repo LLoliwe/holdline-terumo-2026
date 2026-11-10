@@ -49,7 +49,7 @@
  html body .sheet{padding-bottom:calc(52px + 56px + env(safe-area-inset-bottom))}
  .decidebar{bottom:calc(10px + env(safe-area-inset-bottom))}
 }
-/* Phone case as a bottom sheet over the queue (Grok 3, 90e8b1e; behaviour kept, colours set to the night theme).
+/* Phone case as a bottom sheet over the queue (90e8b1e; behaviour kept, colours set to the night theme).
    The grabber drags it down. The decide bar sits at the sheet foot above the home indicator. */
 .grabber,.ucards,.sheet-scrim{display:none}
 @media (max-width:760px){

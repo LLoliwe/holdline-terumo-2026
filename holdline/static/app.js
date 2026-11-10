@@ -389,7 +389,7 @@ function queueNote(id) {
 }
 function paintQueueNote() { const n = $("#qnote"); if (n && state.data) n.outerHTML = queueNote(state.data.case.id); }
 
-// Phone unit cards (Grok 3, 90e8b1e): one unit at a time, swipe or Previous/Next; the table stays below.
+// Phone unit cards (90e8b1e): one unit at a time, swipe or Previous/Next; the table stays below.
 function shownUnits(d) {
   const q = (draft(d.case.id).ufilter || "").trim().toLowerCase();
   if (!q) return d.units;
@@ -468,7 +468,7 @@ function wireCase(d) {
   $("#case").dataset.confirming = dr.confirm ? "1" : "";
   bindGrabber(); bindCard(d);
 }
-// Phone sheet grabber (Grok 3): drag down past 110 px, or tap, to close. Closing never decides anything.
+// Phone sheet grabber: drag down past 110 px, or tap, to close. Closing never decides anything.
 function bindGrabber() {
   const g = $("#grabber"), root = $("#case");
   if (!g || g.dataset.bound) return;

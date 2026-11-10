@@ -226,7 +226,9 @@ class H(SimpleHTTPRequestHandler):
             return self._json({"error": str(e)}, 403)
         except store.KeyMismatch as e:
             return self._json({"error": str(e)}, 422)
-        except (ValueError, KeyError) as e:
+        except KeyError as e:
+            return self._json({"error": f"case not found: {e.args[0] if e.args else ''}"}, 404)
+        except (ValueError, TypeError) as e:
             return self._json({"error": str(e)}, 400)
 
 def main():

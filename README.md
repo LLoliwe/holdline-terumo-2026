@@ -40,8 +40,9 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 67 pass, 1 skipped without data
-HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 68 pass with data
+python3 -m unittest discover -s tests                     # 75 pass, 1 skipped without data
+HOLDLINE_DATA=data python3 -m unittest discover -s tests   # 76 pass with data
+bun test ./tests/test_overview.js                          # optional: 6 UI-logic tests (needs Bun)
 python3 -m holdline.evaluate data                          # reproduces the numbers below
 ```
 
@@ -97,7 +98,7 @@ Data quality note: the dataset README says 60 sensor glitch readings; the file c
 ## African conditions
 - **Power**: power cuts are an input, not an afterthought; a cut without backup turns a logger gap into a hold.
 - **Connectivity**: works offline after first load; decisions queue on the device; SMS fallback text fits one 160-character message, plain ASCII.
-- **Phones**: responsive layout, 44 px touch targets, no frameworks (UI code about 21 KB plus fonts).
+- **Phones**: responsive layout, 44 px touch targets, no frameworks (UI code about 147 KB uncompressed, about 44 KB gzipped, plus fonts; measured 2026/11/10).
 - **New site or country**: thresholds and rules live in `holdline/config/kenya.json`; a new country is a new config file.
 - **Languages**: English only for now.
 
@@ -105,12 +106,13 @@ Data quality note: the dataset README says 60 sensor glitch readings; the file c
 Built by Lebohang Loliwe, using AI coding agents under his direction.
 
 - **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, and analysed the dataset.
-- **Grok (xAI)**: project decisions (which build, demo, branding, publication timing) and review of claims.
+- **Grok (xAI)**: compared options (which build, demo, branding, publication timing) and reviewed claims; Lebohang Loliwe made the final calls.
 - **ChatGPT and Codex (OpenAI)**: research, code, tests and browser checks under the entrant's direction.
 Every number in this README was produced by the code in this repo (`python3 -m holdline.evaluate`).
 
 ## Bundled third-party material
 - IBM Plex Sans and IBM Plex Mono fonts (`holdline/static/fonts/`), SIL Open Font License 1.1, licence text in `holdline/static/fonts/OFL.txt`.
+- Inter variable font, Latin subset (`holdline/static/fonts/Inter-latin-wght.woff2`), SIL Open Font License 1.1, licence text in `holdline/static/fonts/OFL-Inter.txt`. Versions and checksums: [THIRD_PARTY.md](THIRD_PARTY.md).
 - Four outline icons from Tabler Icons (MIT), vendored as inline SVG paths; licence text in `holdline/static/LICENSE-tabler.txt`.
 - No other third-party code; Python standard library only.
 

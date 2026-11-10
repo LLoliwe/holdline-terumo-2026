@@ -160,7 +160,7 @@ class Hard(unittest.TestCase):
         finally: del os.environ["HOLDLINE_HOST"]
 
 class PhoneShell(unittest.TestCase):
-    """Phone sheet (Grok 3, 90e8b1e) is presentation. The release still has to be confirmed, and an accept still sends no units."""
+    """Phone sheet (90e8b1e) is presentation. The release still has to be confirmed, and an accept still sends no units."""
     @classmethod
     def setUpClass(cls):
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

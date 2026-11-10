@@ -12,3 +12,10 @@
 - **What:** HOLDLINE deck v5 (10 slides) is the submission deck. Cover signed "Lebohang Loliwe, Builder · South Africa", no smaller than the Terumo BCT and TALO logos; Pryntor branding left off.
 - **Why:** the entry is registered to Lebohang Loliwe as an individual and he keeps ownership of what he builds, so the deck credits him personally rather than Pryntor (his call, 21:24).
 - **Evidence:** v5 passed claims and de-slop checks before approval. No further edits without his approval.
+
+## 2026/11/10 22:10 SAST: Adversarial pre-submission audit and non-visual hardening (branch audit/hardening)
+- **Decided by:** Lebohang Loliwe asked for a hard, critical submission check with no change to looks (21:54). Merge to main waits for his yes.
+- **What:** server-side input checks in `store.decide` (case ID required, reason must be text, unit list must be a list of IDs, second signer must be a name); duplicate unit IDs released once so the audit count is right; unknown case returns 404; `evaluate` prints usage instead of crashing; README test counts, UI size and font list corrected; Grok disclosure states that Lebohang Loliwe made the final calls; tool names removed from code comments; data model and a documented (not built) FHIR / ISBT 128 / DHIS2 mapping added to ARCHITECTURE.md. No visual, layout, colour, font or deck change.
+- **Why:** found by probing the running server: a duplicate unit in a Change wrote "Released 2" for one unit (wrong audit count); a numeric reason crashed the request handler; README said 67/68 tests and "UI about 21 KB" (actual 75/76 and about 147 KB).
+- **Evidence:** `HOLDLINE_DATA=<starter dataset> python3 -m unittest discover -s tests` = 76 OK; without data 75 OK, 1 skipped; `bun test ./tests/test_overview.js` = 6 pass. `python3 -m holdline.evaluate <data>` reproduces the README table exactly (full year and `--since 2026-07-01`).
+- **Reproduce:** `git checkout audit/hardening && python3 -m unittest discover -s tests && bun test ./tests/test_overview.js`.
