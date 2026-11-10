@@ -2,7 +2,10 @@
 Usage: python3 scripts/preflight.py <dir-of-a-local-clone>   (uses `git` if available)"""
 import subprocess, sys, re
 BAD_PATH = re.compile(r"\.(csv|xlsx|db|sqlite|env|pem|key)$|(^|/)\.env|credentials|secret", re.I)
-BAD_TEXT = re.compile(r"(ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[bp]-|password\s*=)", re.I)
+import os
+# Extra private words (e.g. employer or client names) come from an untracked file, so they never enter the repo.
+_extra = [w.strip() for w in open(os.path.expanduser("~/.holdline_private_words")).read().split(",") if w.strip()] if os.path.exists(os.path.expanduser("~/.holdline_private_words")) else []
+BAD_TEXT = re.compile(r"(ghp_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|xox[bp]-|password\s*=" + "".join("|" + re.escape(w) for w in _extra) + ")", re.I)
 def git(*a, cwd):
     return subprocess.run(["git", *a], cwd=cwd, capture_output=True, text=True, check=True).stdout
 def main(repo):
