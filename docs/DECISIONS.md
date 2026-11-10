@@ -32,3 +32,9 @@
 - **Why:** the judging rubric's top tier asks for language and rules changed by settings, a data model mapped to standards, plain-language reasons with uncertainty, and an audit trail. These add that as working, tested functions instead of claims.
 - **Evidence:** with the starter dataset, `python3 -m unittest discover -s tests` = 92 OK; without data 91 OK, 1 skipped; `bun test ./tests/test_overview.js` = 6 pass. `python3 -m holdline.evaluate data` unchanged (precision 66.1% vs 24.1%, 3,473 false holds). Live run on the starter data: Kajiado case HL-HSP-007-2026102223-EXC explains 3 of 3 readings above 6°C, peak 7.8°C, measured; Kiswahili SMS for it is 151 characters; verify after a real Accept reported INTACT, 82 audit rows; FHIR export had 33 DetectedIssue and 82 AuditEvent resources.
 - **Reproduce:** `git checkout feature/senior-depth && python3 -m unittest discover -s tests`; `HOLDLINE_CONFIG=kenya-sw python3 -m holdline.server data` for Kiswahili SMS.
+
+## 2026/11/10 22:12 SAST: Merge feature/senior-depth into main
+- **Decided by:** Lebohang Loliwe (explicit yes, 22:12).
+- **What:** feature/senior-depth (a4bd8ce) merged into main as 0f64f05. Previous main: 8fc1b07.
+- **Evidence after merge (fresh clone of 0f64f05):** with the starter dataset, `python3 -m unittest discover -s tests` = 92 OK; without data 91 OK, 1 skipped; `bun test ./tests/test_overview.js` = 6 pass, 0 fail.
+- **Reproduce:** `git checkout 0f64f05 && python3 -m unittest discover -s tests && bun test ./tests/test_overview.js`.
