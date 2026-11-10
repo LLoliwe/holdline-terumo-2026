@@ -68,10 +68,11 @@ def open_case(db, ev, units_in_fridge, cfg):
         return cid
     audit(db, "HOLDLINE", "system", "HOLD_RAISED", cid,
           f"{len(units_in_fridge)} units held. {ev['reason']}", ts=ev["start"].strftime("%Y-%m-%dT%H:%M:%S+03:00"))
-    peak = f"peak {ev['peak']:.1f}C" if ev["peak"] is not None else "temp unknown"
-    body = sms.hold_sms(dict(facility_id=ev["facility_id"], kind_short="EXCURSION" if ev["kind"] == "EXCURSION" else "LOGGER GAP",
-                             when=f"{ev['start']:%d/%m %H:%M}", why_short=peak if ev["kind"] == "EXCURSION" else "power cut, no backup",
-                             unit_ids=[u["unit_id"] for u in units_in_fridge]), cfg["sms_max_chars"])
+    lang = cfg.get("language", "en")
+    kind_short, why_short = sms.kind_and_why(ev["kind"], ev["peak"], lang)
+    body = sms.hold_sms(dict(facility_id=ev["facility_id"], kind_short=kind_short,
+                             when=f"{ev['start']:%d/%m %H:%M}", why_short=why_short,
+                             unit_ids=[u["unit_id"] for u in units_in_fridge]), cfg["sms_max_chars"], lang)
     db.execute("INSERT INTO sms_outbox(case_id,ts,body) VALUES(?,?,?)", (cid, ev["start"].isoformat(), body))
     audit(db, "HOLDLINE", "system", "SMS_QUEUED", cid, body, ts=ev["start"].strftime("%Y-%m-%dT%H:%M:%S+03:00"))
     db.commit()

@@ -24,7 +24,9 @@ A working web app plus a tested Python engine:
 5. **Person-in-control decision**: Accept (keep all quarantined), Change (release only ticked units) or Reject (lift the hold). Reason always required. A Change that lists a unit not in the case is refused and nothing is written. If a unit in the case is also held by another case, the case shows a cross-case warning: releasing it here does not clear the other hold. Only a qualified manager can release, and every release needs a second qualified person whose PIN the server checks. Identity comes from the server session, never from what the browser sends. Demo sessions expire (30 minutes idle, 8 hours at most), wrong PINs lock the user out for a while, and the server refuses cross-site, non-JSON and oversized requests. HOLDLINE never releases anything itself.
 6. **Persistent, append-only, hash-chained audit log** in SQLite: decisions, audit entries and retry IDs survive a normal server restart. Database triggers block UPDATE/DELETE, and a SHA-256 chain exposes an edit made around the triggers. Shown live in the header. This detects row edits, not deletion of the entire database; keep backups.
 7. **SMS fallback (simulated, nothing is sent)**: a 160-character-or-less alert per hold for sites with no data.
-8. **Offline-tolerant UI**: app shell cached by a service worker, last data and the 20 newest open cases cached on the device, a decision to keep units on hold (Accept) made offline is queued and replayed with an idempotency key, so a retry is never applied twice. Releases can't be queued offline, because the server must check both signatures. Units stay on hold until then.
+8. **Why each hold, as data**: every case returns the rule that fired, the threshold in force, readings logged and above the limit, peak, whether the temperature was measured or presumed, and the main uncertainty (`explain` in `/api/case/<id>`). No score or probability is invented.
+9. **Exports and an offline integrity check**: signed-in staff can download the full audit trail as CSV (`/api/export/audit.csv`, spreadsheet-formula safe) or as an HL7 FHIR R4 Bundle of DetectedIssue and AuditEvent resources (`/api/export/fhir.json`). `python3 -m holdline.verify <store.db>` re-walks the hash chain read-only and names the first broken row. The FHIR export is a format, not validated against a live FHIR server.
+10. **Offline-tolerant UI**: app shell cached by a service worker, last data and the 20 newest open cases cached on the device, a decision to keep units on hold (Accept) made offline is queued and replayed with an idempotency key, so a retry is never applied twice. Releases can't be queued offline, because the server must check both signatures. Units stay on hold until then.
 
 Mocked or not finished: SMS is not sent (no gateway); log-in is a **demo log-in** (three synthetic users with PINs in `holdline/config/demo_users.json`), not real authentication; sessions are in memory; the data is the organiser's synthetic set loaded at start-up, not a live logger feed.
 
@@ -40,10 +42,12 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest discover -s tests                     # 75 pass, 1 skipped without data
-HOLDLINE_DATA=data python3 -m unittest discover -s tests   # 76 pass with data
+python3 -m unittest discover -s tests                     # 91 pass, 1 skipped without data
+HOLDLINE_DATA=data python3 -m unittest discover -s tests   # 92 pass with data
 bun test ./tests/test_overview.js                          # optional: 6 UI-logic tests (needs Bun)
 python3 -m holdline.evaluate data                          # reproduces the numbers below
+python3 -m holdline.verify data/.holdline/cases-*.db       # audit chain check (path is printed at server start)
+python3 -m holdline.export data/.holdline/cases-*.db fhir  # or csv
 ```
 
 Try it: sign in as demo.manager, open a case, write a reason, open "Release units", tick one unit, choose demo.manager2 as second signer with PIN 3333, press Release, then confirm. Keys: `/` search, `j`/`k` walk the queue, `Esc` back, `?` list. Then sign in as demo.officer, turn the network off in dev tools and Accept another case: it queues, then syncs.
@@ -100,7 +104,8 @@ Data quality note: the dataset README says 60 sensor glitch readings; the file c
 - **Connectivity**: works offline after first load; decisions queue on the device; SMS fallback text fits one 160-character message, plain ASCII.
 - **Phones**: responsive layout, 44 px touch targets, no frameworks (UI code about 147 KB uncompressed, about 44 KB gzipped, plus fonts; measured 2026/11/10).
 - **New site or country**: thresholds and rules live in `holdline/config/kenya.json`; a new country is a new config file.
-- **Languages**: English only for now.
+- **Languages**: the SMS wording is a language pack chosen in the country config (`"language"`), not code. English and Kiswahili ship; the Kiswahili pack is a **draft not yet reviewed by a Kiswahili-speaking blood bank officer** (`python3 -m holdline.i18n` prints each pack's status). The screens are English only for now.
+- **Second site or country by settings**: `HOLDLINE_CONFIG=kenya-sw python3 -m holdline.server data` loads `holdline/config/kenya-sw.json` (same rules, Kiswahili SMS). Configs are checked at start-up: missing keys, out-of-range thresholds or an unknown language stop the server before it serves anything.
 
 ## AI tools we used
 Built by Lebohang Loliwe, using AI coding agents under his direction.
@@ -128,7 +133,7 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 - Glitch hours inside a hot run are bridged (tested); metrics unchanged on this data.
 - Demo log-in only (synthetic users and PINs, in-memory sessions, no TLS): not real authentication. No live logger feed, no SMS gateway.
 - No hosted demo: hosting needs the dataset on a public server, which the starter kit does not clearly permit.
-- Next: probe-check step in the decision, Kiswahili interface, live logger ingest.
+- Next: native-speaker review of the Kiswahili pack, Kiswahili screens, probe-check step in the decision, live logger ingest.
 
 ## Alternatives tested
 

@@ -13,6 +13,9 @@ Standard-library Python 3 only (csv, sqlite3, hashlib, http.server). No external
 | `holdline/sms.py` | 160-character alert builder |
 | `holdline/server.py` | JSON API + static UI |
 | `holdline/static/` | UI, service worker, offline decision queue |
+| `holdline/i18n.py`, `holdline/lang/*.json` | Language packs for SMS wording; language chosen in config |
+| `holdline/verify.py` | Read-only command-line check of a store's audit chain |
+| `holdline/export.py` | Audit CSV and HL7 FHIR R4 Bundle (DetectedIssue, AuditEvent) |
 
 Decision rules (enforced in `store.decide`, not only in the UI):
 - ACCEPT: any signed-in role; all units become QUARANTINED.
@@ -31,9 +34,9 @@ Audit: each row stores `prev_hash` and `hash = sha256(prev_hash + row JSON)`. SQ
 | `audit` | `seq`, `ts`, `actor`, `role`, `action`, `case_id`, `detail`, `client_id`, `prev_hash`, `hash` | Append-only (triggers), SHA-256 chain |
 | `sms_outbox` | `case_id`, `ts`, `body` | Simulated; nothing is sent |
 
-## Mapping to standards (documented, not built)
+## Mapping to standards
 
-No integration is built. This is how the fields would map if HOLDLINE sat beside a blood bank information system. It has not been checked against a live system.
+The FHIR rows below are produced by `holdline/export.py` as a Bundle (tested for shape, not validated against a live FHIR server). No live integration is built. This is how the fields would map if HOLDLINE sat beside a blood bank information system. It has not been checked against a live system.
 
 | HOLDLINE | Standard | Mapping |
 |---|---|---|

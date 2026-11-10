@@ -1,0 +1,11 @@
+{
+  "_status": "draft: written for the prototype, not yet reviewed by a Kiswahili-speaking blood bank officer",
+  "sms_head": "ZUIA {facility} {kind} {when}. ",
+  "sms_kind_excursion": "JOTO KUPITA KIASI",
+  "sms_kind_gap": "KIPIMAJOTO KIMYA",
+  "sms_why_peak": "juu kabisa {peak}C",
+  "sms_why_gap": "umeme ulikatika, hakuna jenereta",
+  "sms_held": "{n} zimezuiwa",
+  "sms_more": " +{n} zaidi",
+  "sms_tail": "Usitoe damu hii. Jibu 1 imehamishwa, 2 nipigie."
+}
