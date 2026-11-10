@@ -19,3 +19,9 @@
 - **Why:** found by probing the running server: a duplicate unit in a Change wrote "Released 2" for one unit (wrong audit count); a numeric reason crashed the request handler; README said 67/68 tests and "UI about 21 KB" (actual 75/76 and about 147 KB).
 - **Evidence:** `HOLDLINE_DATA=<starter dataset> python3 -m unittest discover -s tests` = 76 OK; without data 75 OK, 1 skipped; `bun test ./tests/test_overview.js` = 6 pass. `python3 -m holdline.evaluate <data>` reproduces the README table exactly (full year and `--since 2026-07-01`).
 - **Reproduce:** `git checkout audit/hardening && python3 -m unittest discover -s tests && bun test ./tests/test_overview.js`.
+
+## 2026/11/10 22:05 SAST: Merge audit/hardening into main
+- **Decided by:** Lebohang Loliwe (yes to all, 22:05).
+- **What:** audit/hardening (4aa9c9a) merged into main as f4b855f. Previous main: 901dfbf.
+- **Evidence after merge (fresh clone of f4b855f):** with the starter dataset, `python3 -m unittest discover -s tests` = 76 OK; without data 75 OK, 1 skipped; `bun test ./tests/test_overview.js` = 6 pass, 0 fail.
+- **Reproduce:** `git checkout f4b855f && python3 -m unittest discover -s tests && bun test ./tests/test_overview.js`.
