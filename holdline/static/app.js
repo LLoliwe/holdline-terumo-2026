@@ -321,7 +321,7 @@ function decisionPanel(d, canRelease, alsoUnits, alsoCases) {
   }
   return `<h2>Decide this hold</h2>
    <label class="lbl" for="reason">Reason <span>required</span></label>
-   <textarea id="reason" rows="3" placeholder="e.g. probe check 4.1°C at 12:40, units moved to backup fridge">${esc(dr.reason)}</textarea>
+   <textarea id="reason" rows="3" placeholder="What you checked, e.g. manual probe 4.1°C at 12:40; door found ajar">${esc(dr.reason)}</textarea>
    <button class="btn primary wide" type="button" data-act="ACCEPT">Accept hold · keep all ${fmt(n)} quarantined</button>
    ${canRelease ? `<details class="release"${t || dr.second ? " open" : ""}><summary>Release units…</summary>
      <p class="note">Tick units in the table. Releasing needs your PIN session and a second qualified signer.</p>

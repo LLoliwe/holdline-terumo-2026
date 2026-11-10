@@ -12,7 +12,7 @@ for s in "1ordinary HL-HSP-007-2026102223-EXC" "2large HL-RBTC-ELD-2026100402-EX
   ab eval "HOLDLINE.open('$2');1"; sleep 1.8; ab screenshot $O/${X}_$1.png; done
 # overlapping: tick a unit that is also held elsewhere, open release
 ab eval "HOLDLINE.open('HL-HSP-007-2026102223-EXC');1"; sleep 1.5
-ab eval "{ const r=document.querySelector('#reason'); r.value='Probe check 4.1 C at 12:40, units moved to backup fridge'; r.dispatchEvent(new Event('input')); const c=document.querySelector('.rel'); c.click(); document.querySelector('#second').value='demo.manager2'; document.querySelector('#second').dispatchEvent(new Event('change')); document.querySelector('#spin').value='3333'; document.querySelector('[data-act=CHANGE]').click(); } 1"; sleep 1
+ab eval "{ const r=document.querySelector('#reason'); r.value='Manual probe read 4.1 C at 12:40; fridge door found ajar, closed by staff'; r.dispatchEvent(new Event('input')); const c=document.querySelector('.rel'); c.click(); document.querySelector('#second').value='demo.manager2'; document.querySelector('#second').dispatchEvent(new Event('change')); document.querySelector('#spin').value='3333'; document.querySelector('[data-act=CHANGE]').click(); } 1"; sleep 1
 ab eval "document.querySelector('#decide').scrollIntoView({block:'start'}); 1"; sleep .5; ab screenshot $O/${X}_4overlap_confirm.png
 # decided: confirm the release
 ab eval "document.querySelector('[data-act=send]').click(); 1"; sleep 2.5; ab eval "document.querySelector('#case').scrollTop=0; 1"; ab screenshot $O/${X}_5decided.png
