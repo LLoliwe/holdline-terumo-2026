@@ -1,0 +1,11 @@
+{
+  "_status": "reviewed",
+  "sms_head": "HOLD {facility} {kind} {when}. ",
+  "sms_kind_excursion": "EXCURSION",
+  "sms_kind_gap": "LOGGER GAP",
+  "sms_why_peak": "peak {peak}C",
+  "sms_why_gap": "power cut, no backup",
+  "sms_held": "{n} held",
+  "sms_more": " +{n} more",
+  "sms_tail": "Do not issue. Reply 1 moved, 2 call me."
+}

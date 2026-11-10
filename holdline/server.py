@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import date, datetime, timedelta
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-from . import load_config, data, store, evaluate, auth
+from . import load_config, data, store, evaluate, auth, export
 
 STATIC = os.path.join(os.path.dirname(__file__), "static")
 LOCK = threading.Lock()
@@ -79,6 +79,24 @@ def readings_around(fid, start, hours=24):
     lo, hi = s - timedelta(hours=hours), s + timedelta(hours=hours)
     return [(t.strftime("%Y-%m-%d %H:%M"), v) for t, v in STATE["temps"].get(fid, []) if lo <= t <= hi]
 
+def explain(c):
+    """Why this case holds units, as data: the rule that fired, the thresholds in force, the evidence counted from
+    the logged readings, and whether the temperature was measured or presumed. No score or probability is invented."""
+    cfg = STATE["cfg"]; lim = cfg["fridge_max_c"]
+    s, e = datetime.fromisoformat(c["start"]), datetime.fromisoformat(c["end"])
+    inside = [(t, v) for t, v in STATE["temps"].get(c["facility_id"], []) if s <= t <= e and v not in set(cfg["glitch_values"])]
+    above = [v for _, v in inside if v > lim]
+    hours = int((e - s).total_seconds() // 3600) + 1
+    rule = {"EXCURSION": f"{cfg['persist_hours']}+ consecutive hourly readings above {lim:g}°C",
+            "GAP_PRESUMED": f"logger silent {cfg['gap_hours_alert']}+ h with a power cut without backup, or a hot first reading after",
+            "COOLBOX": f"cool box above {cfg['coolbox_max_c']:g}°C during a transfer"}.get(c["kind"], c["kind"])
+    return dict(rule=rule, evidence="measured" if c["kind"] in ("EXCURSION", "COOLBOX") else "presumed, not measured",
+                window_hours=hours, readings_logged=len(inside), readings_above_limit=len(above),
+                peak_c=c["peak"], limit_c=lim, config=os.environ.get("HOLDLINE_CONFIG", "kenya"),
+                uncertainty=("Temperature in the gap was not recorded; the hold is a precaution." if c["kind"] == "GAP_PRESUMED"
+                             else "Unit residency is day-level: a unit in the fridge any part of a day counts for that day."),
+                decision_needed="A qualified person decides: Accept keeps all units on hold; Change or Reject needs two qualified signers.")
+
 CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; "
        "connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
 
@@ -147,12 +165,24 @@ class H(SimpleHTTPRequestHandler):
             c = db.execute("SELECT * FROM cases WHERE id=?", (cid,)).fetchone()
             if not c: return self._json({"error": "not found"}, 404)
             f = STATE["fac"].get(c["facility_id"], {})
-            return self._json(dict(case=dict(c), facility=f,
+            return self._json(dict(case=dict(c), facility=f, explain=explain(c),
                 units=[dict(r) for r in db.execute("SELECT * FROM case_units WHERE case_id=?", (cid,))],
                 also_held=store.cross_holds(db, cid),
                 readings=readings_around(c["facility_id"], c["start"]),
                 audit=[dict(r) for r in db.execute("SELECT * FROM audit WHERE case_id=? ORDER BY seq", (cid,))],
                 sms=[dict(r) for r in db.execute("SELECT * FROM sms_outbox WHERE case_id=?", (cid,))]))
+        if u.path in ("/api/export/audit.csv", "/api/export/fhir.json"):
+            # Exports always need a signed-in person, whatever HOLDLINE_AUTH_READS says.
+            if not self._session():
+                return self._json({"error": "sign in first"}, 401)
+            if u.path.endswith(".csv"):
+                b = export.audit_csv(db).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/csv; charset=utf-8")
+                self.send_header("Content-Disposition", 'attachment; filename="holdline-audit.csv"')
+                self.send_header("Content-Length", str(len(b))); self.send_header("Cache-Control", "no-store")
+                self.end_headers(); self.wfile.write(b); return
+            return self._json(export.fhir_bundle(db))
         if u.path == "/api/audit":
             return self._json([dict(r) for r in db.execute("SELECT * FROM audit ORDER BY seq DESC LIMIT 100")])
         if u.path == "/api/me":
