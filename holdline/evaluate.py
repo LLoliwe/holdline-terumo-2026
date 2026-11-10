@@ -40,5 +40,7 @@ def run(path, since=None):
                 since=since)
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
+        sys.exit(__doc__.strip())
     p = sys.argv[1]; since = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--since" else None
     print(json.dumps(run(p, since), indent=2, default=str))

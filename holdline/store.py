@@ -86,6 +86,18 @@ def decide(db, case_id, decision, actor, role, reason, unit_ids=None, client_id=
     if configured, a second signature from a different person."""
     if decision not in ("ACCEPT", "CHANGE", "REJECT"):
         raise ValueError("decision must be ACCEPT, CHANGE or REJECT")
+    # Types are checked before anything is read or written: a malformed request is refused, never half-applied.
+    if not isinstance(case_id, str) or not case_id:
+        raise ValueError("case_id is required")
+    if reason is not None and not isinstance(reason, str):
+        raise ValueError("reason must be text")
+    if unit_ids is not None:
+        if not isinstance(unit_ids, list) or not all(isinstance(u, str) for u in unit_ids):
+            raise ValueError("unit_ids must be a list of unit IDs")
+        # A unit listed twice is released once; the audit count must equal the units actually changed.
+        unit_ids = list(dict.fromkeys(unit_ids))
+    if second_signer is not None and not isinstance(second_signer, str):
+        raise ValueError("second_signer must be a user name")
     if client_id is not None:
         if not isinstance(client_id, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{1,80}", client_id):
             raise ValueError("bad client_id")
