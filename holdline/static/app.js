@@ -84,7 +84,7 @@ $("#login").onsubmit = async ev => {
   ev.preventDefault();
   const r = await api("/api/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({user: $("#luser").value, pin: $("#lpin").value})});
   if (r.cached || !r.ok) { $("#lmsg").textContent = r.cached ? "Offline: sign-in needs the server once." : r.data.error; return; }
-  me = r.data; localStorage.setItem("hl.me", JSON.stringify(me)); $("#lpin").value = ""; $("#signin").close(); paintWho();
+  me = r.data; localStorage.setItem("hl.me", JSON.stringify(me)); $("#lpin").value = ""; $("#signin").close(); paintWho(); handover();
   if (state.data) renderCase(state.data);
 };
 document.addEventListener("click", ev => {
@@ -144,7 +144,8 @@ function paintList() {
      <span class="g ${ex ? "ex" : "un"}">${icon(ex ? "ex" : "gap")}</span>
      <span class="f">${esc(c.facility_name || c.facility_id)}</span>
      <span class="u"><b>${fmt(c.n)}</b> units</span>
-     <span class="m">${ex ? "Measured" : "Presumed"} · ${esc(ts(c.start))} · ${hours(c.start, c.end)} h${ex && c.peak != null ? ` · peak ${esc(c.peak)}°C` : ""}${c.facility_county ? " · " + esc(c.facility_county) : ""}</span></div>`;
+     <span class="m">${esc(ts(c.start))} · ${hours(c.start, c.end)} h${c.facility_county ? " · " + esc(c.facility_county) : ""}</span>
+     ${sevRow(c)}</div>`;
   }).join("");
   if (state.hi >= 0) el.setAttribute("aria-activedescendant", "r" + state.hi); else el.removeAttribute("aria-activedescendant");
 }
@@ -204,6 +205,13 @@ window.addEventListener("hashchange", route);
 narrow.addEventListener("change", route);
 
 // First view: what needs attention, before any case is picked.
+// Queue row severity: a word, a shape and a colour, plus a duration bar (0 to 12 h). Not a sparkline: the queue
+// does not carry readings, and fetching 412 series to draw them would cost more than it tells.
+function sevRow(c) {
+  const ex = c.kind === "EXCURSION", pk = Number(c.peak), h = Math.max(1, hours(c.start, c.end));
+  const k = !ex ? ["gap", "Logger silent"] : pk >= 10 ? ["hot", `Peak ${esc(c.peak)}°C`] : ["ex", `Peak ${esc(c.peak)}°C`];
+  return `<span class="sev"><span class="schip ${k[0]}">${k[0] === "gap" ? "◌" : k[0] === "hot" ? "◆" : "▲"} ${k[1]}</span><span class="dbar ${k[0]}" aria-hidden="true"><i style="width:${Math.min(100, h / 12 * 100).toFixed(0)}%"></i></span><span class="dlab">${h} h</span></span>`;
+}
 function paintOverview() {
   // Phone: the overview is the first view, so start the shared scroll at the top (once per arrival on the queue).
   if (layout() !== "split" && state.view === "queue" && !state.ovTop) { state.ovTop = true; requestAnimationFrame(() => { const m = $("main"); if (m) m.scrollTop = 0; }); }
@@ -212,7 +220,7 @@ function paintOverview() {
   // Seam: an overview module (overview.js) may define window.HoldlineOverview.render(mount, ctx) to own the landing view.
   // ctx = {rows, summary, open(id)}; rows are the open cases as listed in the queue. It must not decide anything.
   if (window.HoldlineOverview && typeof window.HoldlineOverview.render === "function") {
-    el.innerHTML = `<div id="overview-mount" class="overview-mount"></div>`;
+    el.innerHTML = `${state.handover || ""}<div id="overview-mount" class="overview-mount"></div>`;
     try { window.HoldlineOverview.render($("#overview-mount"), {rows, summary: s, open: go}); return; } catch (e) { console.error(e); }
   }
   if (!rows.length) { el.innerHTML = `<div class="empty">Pick a hold from the queue.</div>`; return; }
@@ -291,13 +299,12 @@ function renderCase(d) {
   <div class="sheet" data-case="${esc(c.id)}">
    <header class="chead">${backBtn}${status}
     <div id="steps-mount">${steps(d)}</div>
-    <h1>${esc(f.name || c.facility_id)}</h1>
+    <div class="hero"><h1>${esc(f.name || c.facility_id)}</h1><div class="hpeak ${c.kind === "EXCURSION" ? "ex" : "un"}"><span class="hpl">${c.kind === "EXCURSION" ? "Peak" : "Peak in the gap"}</span><span class="hpv">${c.kind === "EXCURSION" && c.peak != null ? esc(c.peak) + "<small>°C</small>" : "unknown"}</span></div></div>
     <p class="why"><span class="g ${cls}">${glyph}</span> <b>${label}.</b> ${esc(c.reason)}.</p>
     <p class="meta"><span>${esc(ts(c.start))} → ${esc(ts(c.end))} EAT</span><span>${esc(f.county || "")}</span><span>${esc(f.connectivity || "")}</span><span>backup power: ${f.has_blood_fridge_backup_power === "True" ? "yes" : "no"}</span><span class="mono">${esc(c.id)}</span></p>
    </header>
    <dl class="facts" aria-label="Evidence summary">
     <div><dt>${open ? "Units held here" : "Units in this case"}</dt><dd>${fmt(d.units.length)}</dd></div>
-    <div><dt>Peak</dt><dd>${c.kind === "EXCURSION" && c.peak != null ? esc(c.peak) + "°C" : "unknown"}</dd></div>
     <div><dt>Readings above 6°C</dt><dd>${e.above} <small>of ${e.n}</small></dd></div>
     <div><dt>Hours with no reading</dt><dd class="${e.missing ? "unw" : ""}">${e.missing}</dd></div>
     <div><dt>Also held elsewhere</dt><dd class="${alsoUnits.length ? "exw" : ""}">${alsoUnits.length ? `${alsoUnits.length} unit${alsoUnits.length > 1 ? "s" : ""}` : "none"}</dd></div>
@@ -574,6 +581,39 @@ function fuzzy(q, text) {  // subsequence match; contiguous and word-start hits 
   return i === q.length ? sc : 0;
 }
 const cmd = {items: [], hi: 0};
+// Extras. None of these can decide anything or change a release rule.
+// CSV of the open queue as the browser has it (no server call): one row per hold, quoted, UTF-8 with BOM for spreadsheets.
+function exportCSV() {
+  const rows = (state.rows || []).filter(c => c.status === "OPEN" || state.status === "OPEN");
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const head = ["case_id", "facility", "county", "kind", "start_eat", "end_eat", "peak_c", "units_on_hold"];
+  const body = rows.map(c => [c.id, c.facility_name || c.facility_id, c.facility_county || "", c.kind === "EXCURSION" ? "measured excursion" : "presumed (logger gap)", ts(c.start), ts(c.end), c.kind === "EXCURSION" ? c.peak : "", c.n].map(q).join(","));
+  const blob = new Blob(["\ufeff" + [head.join(","), ...body].join("\r\n")], {type: "text/csv;charset=utf-8"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `holdline-open-queue-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`Exported ${fmt(rows.length)} open holds as CSV. Synthetic data.`);
+}
+// Light theme = the base styles with pure white surfaces; dark = theme.css. Choice kept in this browser only.
+function toggleTheme() {
+  const light = !document.documentElement.classList.contains("light");
+  document.documentElement.classList.toggle("light", light); $("#theme-css").disabled = light;
+  localStorage.setItem("hl.theme", light ? "light" : "dark");
+}
+if (localStorage.getItem("hl.theme") === "light") { document.documentElement.classList.add("light"); const t = document.getElementById("theme-css"); if (t) t.disabled = true; }
+// Shift handover: decisions recorded since the start of this shift (07:00 or 19:00 local), from the audit log.
+// Shown once per sign-in on the landing view. Read-only.
+async function handover() {
+  if (!me) return;
+  const r = await api("/api/audit"); if (!r.ok || r.cached || !Array.isArray(r.data)) return;
+  const now = new Date(), start = new Date(now); start.setHours(now.getHours() >= 19 ? 19 : now.getHours() >= 7 ? 7 : -5, 0, 0, 0);
+  const dec = r.data.filter(a => /^DECISION_/.test(a.action) && new Date(a.ts) >= start);
+  const kinds = {DECISION_ACCEPT: "kept on hold", DECISION_CHANGE: "partly released", DECISION_REJECT: "released"};
+  const hh = String(start.getHours()).padStart(2, "0") + ":00";
+  const open = state.rows ? state.rows.length : null;
+  const lines = dec.slice(0, 4).map(a => `<li><b>${esc(a.actor)}</b> ${kinds[a.action] || esc(a.action)} · <a href="#/case/${encodeURIComponent(a.case_id)}">${esc(a.case_id)}</a> · ${new Date(a.ts).toTimeString().slice(0, 5)}</li>`).join("");
+  state.handover = `<section class="handover" aria-label="Shift handover"><h2>Since ${hh}: ${dec.length ? `${fmt(dec.length)} decision${dec.length === 1 ? "" : "s"} recorded` : "no decisions recorded yet"}${open != null && state.status === "OPEN" ? ` · ${fmt(open)} holds still open` : ""}</h2>${lines ? `<ul>${lines}</ul>` : ""}<p class="hint">From the audit log. New holds are not counted here because the synthetic holds carry dataset dates, not today's.</p></section>`;
+  if (state.view === "queue") paintOverview();
+}
 function cmdActions() {
   const a = [
     {k: "Go to holds", run: () => { location.hash = "#/"; }},
@@ -583,6 +623,9 @@ function cmdActions() {
     {k: "Show every hold in this tab", run: () => { state.q = ""; $("#q").value = ""; setKinds([]); }},
     me ? {k: "Sign out", run: () => $("#out") && $("#out").click()} : {k: "Sign in", run: openSignin},
     {k: "Keyboard shortcuts", run: () => $("#help").showModal()},
+    {k: "Export the open queue as CSV", run: exportCSV},
+    ...(state.view === "case" && state.data ? [{k: "Print this case for the audit file", run: () => window.print()}] : []),
+    {k: document.documentElement.classList.contains("light") ? "Switch to dark theme" : "Switch to light theme", run: toggleTheme},
   ];
   return a.map(x => ({...x, group: "Actions"}));
 }
@@ -624,7 +667,7 @@ function wireCmd() {
     const r = await api("/api/case/" + encodeURIComponent(decodeURIComponent(m[1])), {headers: auth()});
     if (r.data && r.data.case) { state.status = r.data.case.status; paintTabs(); }
   }
-  await loadList(); route();
+  await loadList(); route(); handover();
 })();
 setInterval(() => { if (Q().some(d => !d._error)) flush(); }, 10000);
 window.HOLDLINE = {open: id => go(id), current: () => state.data && state.data.case.id, state};  // used by the benchmark harness

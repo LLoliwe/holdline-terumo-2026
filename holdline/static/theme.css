@@ -111,7 +111,7 @@ td input[type=checkbox]{accent-color:#0A84FF}
 .st.ON_HOLD{background:#fff;color:#000}
 
 /* decision panel: glass with a vivid header glow */
-.decide{background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border:1px solid var(--rule);border-radius:24px;padding:24px;gap:14px;overflow:hidden;position:sticky}
+.decide{background:#1C1C1E;border:1px solid var(--rule);border-radius:24px;padding:24px;gap:14px;overflow:hidden;position:sticky}
 .decide::before{content:"";position:absolute;inset:-40% -20% auto -20%;height:180px;background:radial-gradient(50% 60% at 30% 50%,rgba(10,132,255,.30),transparent 70%),radial-gradient(40% 60% at 75% 40%,rgba(191,90,242,.26),transparent 70%);pointer-events:none;z-index:0}
 .decide>*{position:relative;z-index:1}
 .decide h2{font-size:22px;font-weight:750;letter-spacing:-.018em}
@@ -126,11 +126,11 @@ td input[type=checkbox]{accent-color:#0A84FF}
 .slide input::-webkit-slider-thumb{background-color:#D70015}
 .slide.done{background:#D70015}
 .sms{background:var(--surface-3)}
-.toast{background:rgba(44,44,46,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:1px solid var(--rule);border-radius:16px}
+.toast{background:#2C2C2E;border:1px solid var(--rule);border-radius:16px}
 .upd-banner{background:var(--surface-3)}
 .upd-banner button{background:#fff;color:#000}
 dialog{background:var(--surface-2);color:#fff;border:1px solid var(--rule);border-radius:22px}
-dialog::backdrop{background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+dialog::backdrop{background:rgba(0,0,0,.7)}
 .evaltable{background:var(--surface);border-color:var(--rule)}
 
 /* landing: Revolut-style vivid cards and chunky numbers */
@@ -158,11 +158,12 @@ dialog::backdrop{background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);bac
 
 /* spring motion; all off under reduced motion */
 @media (prefers-reduced-motion:no-preference){
-  .ocard,.facts div,.mfridge{animation:rise .7s var(--spring) both}
-  .ocard:nth-child(2),.facts div:nth-child(2){animation-delay:.04s}
-  .ocard:nth-child(3),.facts div:nth-child(3){animation-delay:.08s}
-  .ocard:nth-child(4),.facts div:nth-child(4){animation-delay:.12s}
-  .facts div:nth-child(5){animation-delay:.16s}
+  .ocard{animation:rise .7s var(--spring) both}
+  .ocard:nth-child(2){animation-delay:.04s}
+  .ocard:nth-child(3){animation-delay:.08s}
+  .ocard:nth-child(4){animation-delay:.12s}
+  .list .row,.facts div{transition:transform .45s var(--spring),background .15s}
+  .list .row:hover{transform:translateX(2px)}
   .ocard{transition:transform .5s var(--spring)}
   .ocard:hover{transform:translateY(-4px) scale(1.01)}
 }
@@ -179,3 +180,49 @@ dialog::backdrop{background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(6px);bac
   html body .sheet{padding:16px 16px 96px}
 }
 .xwarn,.warnchip{background:var(--unverified-bg)!important;color:#FFD08A!important;border-color:var(--unverified)!important}.also{color:#FFB340;background:rgba(255,159,10,.14)}
+
+/* ---- pass 2: richer rows, hero, table, chart ---- */
+.list .row{grid-template-columns:18px minmax(0,1fr) auto;padding:14px 14px 14px 12px;gap:4px 10px}
+.list .row .f{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.list .row .m{font-family:var(--sans);font-size:12.5px;color:var(--ink-3)}
+.sev{grid-column:2/4;display:flex;align-items:center;gap:10px;margin-top:4px}
+.schip{font:700 11.5px var(--sans);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.schip.ex{color:#FF8A80;background:rgba(255,69,58,.16)}
+.schip.hot{color:#000;background:#FF453A}
+.schip.gap{color:#FFB340;background:rgba(255,159,10,.15)}
+.dbar{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;max-width:140px}
+.dbar i{display:block;height:100%;border-radius:3px}
+.dbar.ex i{background:linear-gradient(90deg,#FF6961,#FF453A)}
+.dbar.hot i{background:linear-gradient(90deg,#FF453A,#FF2D55)}
+.dbar.gap i{background:repeating-linear-gradient(45deg,#FF9F0A 0 3px,rgba(255,159,10,.35) 3px 6px)}
+.dlab{font:600 11.5px var(--sans);color:var(--ink-3);font-variant-numeric:tabular-nums}
+.list .row.sel{background:linear-gradient(100deg,rgba(10,132,255,.38),rgba(94,92,230,.22) 60%,rgba(191,90,242,.12));box-shadow:inset 0 0 0 1px rgba(64,156,255,.55)}
+.list .row.sel .f{color:#fff}
+
+/* case hero: gradient status band and the peak as a big numeral */
+.chead{position:relative;padding:22px 24px 18px;border-radius:26px;overflow:hidden;background:#121212}
+.chead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(80% 140% at 0% 0%,rgba(255,69,58,.30),transparent 60%),radial-gradient(60% 120% at 100% 0%,rgba(191,90,242,.22),transparent 60%)}
+.sheet:has(.kick.done) .chead::before{background:radial-gradient(80% 140% at 0% 0%,rgba(10,132,255,.30),transparent 60%),radial-gradient(60% 120% at 100% 0%,rgba(94,92,230,.22),transparent 60%)}
+.chead>*{position:relative;z-index:1}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.hero h1{margin:14px 0 6px;flex:1 1 320px}
+.hpeak{display:grid;justify-items:end;line-height:1}
+.hpl{font:600 12px var(--sans);color:var(--ink-3);margin-bottom:4px}
+.hpv{font:800 64px/1 var(--sans);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.hpv small{font-size:28px;font-weight:700;margin-left:2px}
+.hpeak.ex .hpv{color:#FF6961}
+.hpeak.un .hpv{color:#FFB340;font-size:34px}
+
+/* unit table: roomy rows, pill tags, sticky header */
+.unitsp .twrap{max-height:560px}
+.unitsp thead th{position:sticky;top:0;z-index:2;background:#1C1C1E}
+.unitsp td{padding:14px 14px}
+.st{border-radius:999px!important;padding:4px 10px!important;font:700 11px var(--sans)!important;letter-spacing:.02em}
+.st.ON_HOLD{background:#fff;color:#000}
+.st.RELEASED{background:rgba(48,209,88,.18);color:#30D158}
+.st.QUARANTINED{background:rgba(255,69,58,.16);color:#FF8A80}
+
+/* chart */
+:root{--chart-line:#FFFFFF;--chart-fill:#0A84FF}
+.chart .limline{stroke-dasharray:none;stroke-width:1.5}
+@media (max-width:760px){html body .hpv{font-size:44px}html body .hpv small{font-size:20px}html body .chead{padding:16px 16px 14px;border-radius:20px}}

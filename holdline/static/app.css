@@ -331,3 +331,11 @@ td.c-unit{white-space:normal;min-width:200px}
 .mtable{margin:8px 0 22px}
 .subeye{margin-top:8px}
 @media (prefers-reduced-motion:reduce){.mstrip,.mholds a{transition:none}}
+.handover{margin:0 0 18px;padding:14px 18px;border-radius:16px;background:var(--verified-bg);border:1px solid var(--rule)}
+.handover h2{font-size:16px;margin:0 0 6px}
+.handover ul{list-style:none;margin:0 0 6px;padding:0;display:grid;gap:3px;font-size:13.5px}
+.handover .hint{font-size:12px;color:var(--ink-3);margin:0}
+.case>.handover{margin:28px 36px 0}
+html.light{--paper:#FFFFFF;--surface:#FFFFFF}
+html.light body{background:#FFFFFF}
+html.light thead th{background:#FFFFFF}html.light tbody tr:hover{background:#F5F5F7}

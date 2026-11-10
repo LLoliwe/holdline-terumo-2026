@@ -15,11 +15,16 @@ function chart(rs, start, end, kind) {
   const st = new Date(start).getTime(), t0 = Math.min(st - 24 * 36e5, ...tt), t1 = Math.max(st + 24 * 36e5, ...tt), vs = rs.map(r => r[1]).filter(v => v > -50 && v < 60);
   const lo = Math.min(0, ...vs), hi = Math.max(12, ...vs);
   const x = t => L + (t - t0) / Math.max(1, t1 - t0) * (W - L - R), y = v => H - B - (v - lo) / (hi - lo) * (H - T - B);
-  let d = "", prev = null, dots = "";
+  let d = "", prev = null, dots = "", area = "", segX0 = null, lastX = null;  // area: gradient fill under each unbroken run
+  const base = (H - B).toFixed(1), closeSeg = () => { if (segX0 != null) area += `L${lastX} ${base}L${segX0} ${base}Z`; };
   rs.forEach((r, i) => { const t = tt[i]; if (r[1] < -50 || r[1] > 60) return;
-    d += (prev && t - prev > 36e5 * 1.5 ? "M" : (d ? "L" : "M")) + x(t).toFixed(1) + " " + y(r[1]).toFixed(1);
+    const brk = !d || (prev && t - prev > 36e5 * 1.5), X = x(t).toFixed(1), Y = y(r[1]).toFixed(1);
+    if (brk) { closeSeg(); segX0 = X; area += `M${X} ${base}L${X} ${Y}`; } else area += `L${X} ${Y}`;
+    lastX = X;
+    d += (brk ? "M" : "L") + X + " " + Y;
     if (r[1] > 6) dots += `<path d="M${x(t).toFixed(1)} ${(y(r[1]) - 4).toFixed(1)}l4 7h-8z" fill="var(--excursion)"/>`;
     prev = t; });
+  closeSeg();
   let gaps = "";  // hatched columns where an hourly reading is missing
   const edges = [t0 - 36e5, ...tt, t1 + 36e5];  // include silence before the first and after the last reading
   for (let i = 1; i < edges.length; i++) if (edges[i] - edges[i - 1] > 36e5 * 1.5) {
@@ -35,12 +40,12 @@ function chart(rs, start, end, kind) {
   const pk = vs.length ? Math.max(...vs) : null;
   const sum = `${rs.length} of 49 hourly readings present from ${ts(rs[0][0])} to ${ts(rs[rs.length - 1][0])}. ${vs.filter(v => v > 6).length} above 6°C${pk != null ? `, highest ${pk}°C` : ""}. Event window ${ts(start)} to ${ts(end)}.`;
   return `<figure class="chart"><svg viewBox="0 0 ${W} ${H}" tabindex="0" role="img" aria-label="${esc(sum)}" id="chartsvg">
-   <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--unverified)" stroke-width="1.2" opacity=".45"/></pattern></defs>
+   <defs><linearGradient id="fillg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--chart-fill, #0A84FF);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--chart-fill, #0A84FF);stop-opacity:0"/></linearGradient><linearGradient id="exg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--excursion);stop-opacity:0"/><stop offset=".5" style="stop-color:var(--excursion);stop-opacity:.28"/><stop offset="1" style="stop-color:var(--excursion);stop-opacity:0"/></linearGradient><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--unverified)" stroke-width="1.2" opacity=".45"/></pattern></defs>
    ${grid}<rect x="${L}" y="${y(6)}" width="${W - L - R}" height="${y(2) - y(6)}" fill="var(--band-safe)"/>
-   <line x1="${L}" x2="${W - R}" y1="${y(6)}" y2="${y(6)}" stroke="var(--excursion)" stroke-width="1.5" stroke-dasharray="6 4"/>
+   <line x1="${L}" x2="${W - R}" y1="${y(6)}" y2="${y(6)}" stroke="var(--excursion)" stroke-width="1.5" stroke-dasharray="6 4" class="limline" shape-rendering="crispEdges"/>
    <text x="${W - R}" y="${y(6) - 5}" text-anchor="end" class="ax lim">6°C limit</text>
-   <rect x="${Math.min(sx, ex)}" y="${T}" width="${Math.max(2, Math.abs(ex - sx))}" height="${H - T - B}" fill="var(--excursion-bg)" opacity=".6"/>
-   ${gaps}<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"/>${dots}
+   <rect x="${Math.min(sx, ex) - 14}" y="${T}" width="${Math.max(2, Math.abs(ex - sx)) + 28}" height="${H - T - B}" fill="url(#exg)" class="exglow"/><rect x="${Math.min(sx, ex)}" y="${T}" width="${Math.max(2, Math.abs(ex - sx))}" height="${H - T - B}" fill="var(--excursion-bg)" opacity=".6"/>
+   ${gaps}<path d="${area}" fill="url(#fillg)" class="area"/><path d="${d}" fill="none" stroke="var(--chart-line, var(--ink))" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}
    <g id="cur" visibility="hidden"><line id="curl" y1="${T}" y2="${H - B}" stroke="var(--verified)" stroke-width="1.5"/><circle id="curc" r="4.5" fill="var(--verified)"/><text id="curt" class="ax curt" y="${T + 10}"></text></g>
    <text x="${L}" y="${H - 4}" class="ax">${esc(hm(t0).slice(0, 10))}</text><text x="${x(st)}" y="${T - 4}" text-anchor="middle" class="ax ev">event start ${esc(hm(st).slice(11))}</text><text x="${W - R}" y="${H - 4}" text-anchor="end" class="ax">${esc(hm(t1).slice(0, 10))}</text><text x="${L - 6}" y="${T - 4}" text-anchor="end" class="ax">°C</text></svg>
    <figcaption class="sr" id="chartsum">${esc(sum)}</figcaption><p class="curread" id="curread" aria-live="polite"></p></figure>`;
