@@ -1,0 +1,6 @@
+rethink LOAD "{\"load_ms\":40,\"fcp_ms\":40,\"requests_first_2_5s\":32,\"kb_first_2_5s\":443,\"dom\":3438,\"ls_kb\":458}"
+rethink BENCH "{\"open_small_ms\":25,\"requests_per_open\":2,\"open_758_ms\":36,\"requests_big\":1,\"dom_nodes_after_big\":10128,\"heap_mb\":1.2,\"race_shows\":\"HL-HSP-017-2026102409-EXC\",\"race_expected\":\"HL-HSP-017-2026102409-EXC\",\"race_pass\":true,\"ten_opens_ms\":229,\"longtask_ms_ten\":0}"
+rethink LOAD "{\"load_ms\":33,\"fcp_ms\":44,\"requests_first_2_5s\":32,\"kb_first_2_5s\":443,\"dom\":3438,\"ls_kb\":458}"
+rethink BENCH "{\"open_small_ms\":14,\"requests_per_open\":2,\"open_758_ms\":19,\"requests_big\":1,\"dom_nodes_after_big\":10128,\"heap_mb\":1.2,\"race_shows\":\"HL-HSP-017-2026102409-EXC\",\"race_expected\":\"HL-HSP-017-2026102409-EXC\",\"race_pass\":true,\"ten_opens_ms\":214,\"longtask_ms_ten\":0}"
+rethink LOAD "{\"load_ms\":40,\"fcp_ms\":44,\"requests_first_2_5s\":32,\"kb_first_2_5s\":443,\"dom\":3438,\"ls_kb\":458}"
+rethink BENCH "{\"open_small_ms\":14,\"requests_per_open\":2,\"open_758_ms\":21,\"requests_big\":1,\"dom_nodes_after_big\":10128,\"heap_mb\":1.2,\"race_shows\":\"HL-HSP-017-2026102409-EXC\",\"race_expected\":\"HL-HSP-017-2026102409-EXC\",\"race_pass\":true,\"ten_opens_ms\":213,\"longtask_ms_ten\":51}"

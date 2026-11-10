@@ -49,6 +49,16 @@ No package dependency is added; the only third-party additions are four Tabler i
 | Every click re-fetched and rebuilt the whole queue | Extra request and DOM work per click | Selection only toggles classes; the queue is fetched once per status |
 | Chart axis followed the readings | A silent logger made the line shorter instead of showing missing time | Fixed 48-hour axis with hatched, labelled "no readings" spans; "hours with no reading" in the evidence row |
 
+## Release confirmation integrity (found in review of f43439f and 6ba89fb, fixed)
+
+The confirmation sentence used to be drawn from the ticks at that moment while Confirm sent whatever was ticked later, and the boxes stayed live. Reproduced on this branch before the fix: the screen said "Release 1 unit", the request carried 2 units, and the server released 2.
+
+Now the unit ids are frozen when the confirmation is drawn; every tick box and the "Tick shown" and "Clear ticks" buttons are disabled while it is open; Confirm sends exactly the frozen list, plus the same list as `confirmed_unit_ids`. The server refuses with 409 and writes nothing if the two lists differ as sets or in length (`Http.test_release_must_match_confirmed_units`, which fails with the check switched off). The browser check `scripts/ui-bench/confirm_freeze.sh` forces a second tick after the sentence is shown and confirms that one unit is sent and one is released. The server check protects against the interface building the request from the wrong state; it cannot stop a deliberately modified client, which is what the two signatures are for.
+
+## Roles on screen
+
+The decision panel always shows the signed-in role with what it can and cannot do, and why a release needs a qualified releaser plus a second qualified releaser while keeping a hold needs one person. Signed out, the same panel lists both roles. Demo users are role names only (`demo.officer`, `demo.manager`, `demo.manager2`), with synthetic PINs; no real names.
+
 ## Measured (median of 3 runs, headless Chromium, 1440×900, local server, full-history demo)
 
 | Metric | main | v15 | v16 | ui/rethink |
@@ -68,7 +78,7 @@ The extra data at load is the full queue (412 rows instead of 200); the page hol
 ## Checks
 
 PASS
-- 67 tests with the starter data (66 plus 1 skip without it); pre-flight clean.
+- 68 tests with the starter data (67 plus 1 skip without it); pre-flight clean.
 - Keyboard only: `/` search, `Esc` clears, `j`/`k` preview, chart cursor with `←`/`→` states each hour in a live region (screen reader itself not tested), `?` help, sign-in dialog, reason, `Tab` to Accept with a visible 2 px focus ring, `Enter` records the decision.
 - Offline: a manager ticks a unit, goes offline and presses Accept. The queued decision carries no units and no second signer, survives an offline reload, syncs on reconnect, and every unit ends QUARANTINED with one DECISION audit row.
 - On phones the unit table becomes stacked rows (unit, state, then component, group and expiry).
@@ -90,4 +100,4 @@ NOT TESTED
     HOLDLINE_DB=:memory: python3 -m holdline.server data --port 8080 --since 2025-11-01
     # open http://localhost:8080/  (add ?layout=drawer or ?layout=page to compare layouts)
 
-The browser checks used for the table above are in `scripts/ui-bench/` (they need `agent-browser` and a running server).
+Captures of the six scenarios at 1440×900 and 390×844 and the raw timing runs are in `docs/ui-evidence/`. The browser checks used for the table above are in `scripts/ui-bench/` (they need `agent-browser` and a running server).

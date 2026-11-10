@@ -40,8 +40,8 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 66 pass, 1 skipped without data
-HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 67 pass with data
+python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 67 pass, 1 skipped without data
+HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 68 pass with data
 python3 -m holdline.evaluate data                          # reproduces the numbers below
 ```
 

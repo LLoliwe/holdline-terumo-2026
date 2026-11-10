@@ -200,6 +200,12 @@ class H(SimpleHTTPRequestHandler):
         if not actor:
             return self._json({"error": "sign in first"}, 401)
         role = users()[actor]["role"]
+        # A release confirmed on screen carries the exact unit list the person saw. If the list sent differs
+        # (for example a tick changed after the confirmation sentence was shown), nothing is written.
+        if "confirmed_unit_ids" in body:
+            shown, sent = body.get("confirmed_unit_ids"), body.get("unit_ids")
+            if not isinstance(shown, list) or not isinstance(sent, list) or len(shown) != len(sent) or set(shown) != set(sent):
+                return self._json({"error": "the units sent differ from the units confirmed on screen; nothing was recorded"}, 409)
         second = None
         if body.get("second_signer"):
             try:

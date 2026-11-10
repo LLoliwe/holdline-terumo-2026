@@ -19,6 +19,7 @@
 <dialog id="signin" aria-labelledby="signin-t"><form id="login" method="dialog">
  <h2 id="signin-t">Sign in</h2>
  <p class="hint">Demo log-in. Synthetic users and PINs, not real authentication. Sessions end after 30 minutes idle.</p>
+ <p class="hint">A duty officer can accept a hold (units stay quarantined). A qualified releaser can also release units, and needs a second qualified releaser to enter their PIN.</p>
  <label>User<select id="luser"><option value="demo.officer">demo.officer · duty officer</option><option value="demo.manager">demo.manager · qualified releaser</option><option value="demo.manager2">demo.manager2 · qualified releaser</option></select></label>
  <label>PIN<input id="lpin" type="password" inputmode="numeric" autocomplete="off" required></label>
  <p id="lmsg" class="err" role="alert"></p>

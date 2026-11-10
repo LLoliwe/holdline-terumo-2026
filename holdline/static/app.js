@@ -248,7 +248,7 @@ function evidence(d) {
   const max = vals.length ? Math.max(...vals.map(r => r[1])) : null;
   return {above, missing, max, n: rs.length, peak: c.peak};
 }
-function draft(id) { return state.drafts[id] || (state.drafts[id] = {reason: "", ticks: new Set(), second: "", confirm: null, ufilter: ""}); }
+function draft(id) { return state.drafts[id] || (state.drafts[id] = {reason: "", ticks: new Set(), second: "", confirm: null, frozen: null, ufilter: ""}); }
 
 function renderCase(d) {
   const c = d.case, f = d.facility || {}, open = c.status === "OPEN", [cls, glyph, label] = KIND(c), e = evidence(d);
@@ -286,6 +286,18 @@ function renderCase(d) {
   wireCase(d);
 }
 
+// Who can do what: shown beside every decision so the rule is visible, not discovered by a refusal.
+const ROLES = {
+  duty_officer: {name: "Duty officer", can: ["Accept a hold: every unit stays quarantined"], cannot: ["Release units back to stock"]},
+  qualified_releaser: {name: "Qualified releaser (supervisor)", can: ["Accept a hold", "Release ticked units, with a second qualified releaser's PIN"], cannot: ["Sign as your own second signer"]},
+};
+function rolesCard() {
+  const r = me ? ROLES[role()] : null;
+  const li = (a, cls) => a.map(x => `<li class="${cls}">${esc(x)}</li>`).join("");
+  return `<details class="roles" open><summary>${r ? `Your role: <b>${esc(r.name)}</b>` : "Who can do what"}</summary>
+   ${r ? `<ul>${li(r.can, "can")}${li(r.cannot, "cannot")}</ul>` : `<ul><li class="can"><b>Duty officer</b>: accept a hold; units stay quarantined</li><li class="can"><b>Qualified releaser</b>: also release units, with a second qualified releaser</li></ul>`}
+   <p class="why2">Why two people for a release: it puts blood back into stock after a temperature problem. Keeping a hold is always safe, so one person can do it.</p></details>`;
+}
 function decisionPanel(d, canRelease, alsoUnits, alsoCases) {
   const c = d.case, n = d.units.length, dr = draft(c.id);
   if (c.status === "NO_UNITS") return `<h2>Nothing to decide</h2><p>The excursion is in the audit log. No units were in this fridge, so nothing was held.</p>`;
@@ -295,10 +307,10 @@ function decisionPanel(d, canRelease, alsoUnits, alsoCases) {
     return `<h2>Decided: ${esc(c.status)}</h2>${last ? `<p><b>${esc(last.actor)}</b> (${esc(last.role)}) · ${esc(ts(last.ts))}</p><p class="quote">${esc(last.detail)}</p>` : ""}
      <p>${fmt(n - held)} released · ${fmt(held)} stay quarantined.</p><p class="note">Read-only. A decided case cannot be changed here.</p>`;
   }
-  if (!me) return `<h2>Decide this hold</h2><p>Units stay on hold until a person decides.</p><button class="btn primary wide" type="button" data-act="signin">Sign in to decide</button>${queueNote(c.id)}`;
+  if (!me) return `<h2>Decide this hold</h2><p>Units stay on hold until a person decides.</p><button class="btn primary wide" type="button" data-act="signin">Sign in to decide</button>${rolesCard()}${queueNote(c.id)}`;
   const t = dr.ticks.size;
   if (dr.confirm) {  // friction: a release is summarised and confirmed before it is sent
-    const rel = dr.confirm === "REJECT" ? d.units.map(u => u.unit_id) : [...dr.ticks];
+    const rel = dr.frozen || [];
     return `<h2>Confirm release</h2>
      <p class="confirm"><b>${dr.confirm === "REJECT" ? "Release all" : "Release"} ${fmt(rel.length)} unit${rel.length === 1 ? "" : "s"}</b>; ${fmt(n - rel.length)} stay quarantined.</p>
      <p class="mono small">${rel.slice(0, 6).map(esc).join(", ")}${rel.length > 6 ? `, +${rel.length - 6} more` : ""}</p>
@@ -318,7 +330,7 @@ function decisionPanel(d, canRelease, alsoUnits, alsoCases) {
      <div class="row"><select id="second" aria-label="Second signer"><option value="">Second signer</option>${["demo.manager", "demo.manager2"].filter(u => u !== me.user).map(u => `<option ${dr.second === u ? "selected" : ""}>${u}</option>`).join("")}</select>
      <input id="spin" type="password" inputmode="numeric" placeholder="Their PIN" aria-label="Second signer PIN" autocomplete="off"></div>
      <div class="row"><button class="btn" type="button" data-act="CHANGE" ${t ? "" : "disabled"}>Release ${t} ticked…</button><button class="btn" type="button" data-act="REJECT">Release all ${fmt(n)}…</button></div>
-    </details>` : `<p class="note">You are signed in as a duty officer: you can keep a hold. Releasing units needs a qualified releaser and a second signer.</p>`}
+    </details>` : ""}${rolesCard()}
    <p id="dmsg" class="err" role="alert"></p>${queueNote(c.id)}`;
 }
 function queueNote(id) {
@@ -345,26 +357,33 @@ function wireCase(d) {
   if (uf) { uf.oninput = () => { dr.ufilter = uf.value; applyUF(); }; if (dr.ufilter) applyUF(); }
   root.onchange = ev => {
     if (!ev.target.classList.contains("rel")) return;
+    if (dr.confirm) { ev.target.checked = dr.ticks.has(ev.target.value); return; }  // belt and braces: no change while confirming
     ev.target.checked ? dr.ticks.add(ev.target.value) : dr.ticks.delete(ev.target.value); paintTicks(d);
   };
   root.onclick = ev => {
     const a = ev.target.closest("[data-act]"); if (!a) return;
     const act = a.dataset.act;
     if (act === "signin") return openSignin();
+    if ((act === "tickvis" || act === "untick") && dr.confirm) return;
     if (act === "tickvis") { root.querySelectorAll("#ubody tr:not([hidden]) .rel").forEach(x => { x.checked = true; dr.ticks.add(x.value); }); return paintTicks(d); }
     if (act === "untick") { root.querySelectorAll(".rel").forEach(x => x.checked = false); dr.ticks.clear(); return paintTicks(d); }
-    if (act === "unconfirm") { dr.confirm = null; return repaintDecision(d); }
+    if (act === "unconfirm") { dr.confirm = null; dr.frozen = null; lockTicks(false); return repaintDecision(d); }
     if (act === "send") return decide(d, dr.confirm);
     if (act === "ACCEPT") return decide(d, "ACCEPT");
     if (act === "CHANGE" || act === "REJECT") {
       if (!dr.reason || dr.reason.trim().length < 5) return msg("Write a reason first.");
       if (!dr.second) return msg("Pick the second signer.");
       if (!($("#spin") || {}).value) return msg("The second signer enters their PIN.");
-      dr.pin = $("#spin").value; dr.confirm = act; return repaintDecision(d);
+      dr.pin = $("#spin").value; dr.confirm = act;
+      dr.frozen = act === "REJECT" ? d.units.map(u => u.unit_id) : [...dr.ticks];  // exactly what the sentence will show
+      lockTicks(true); return repaintDecision(d);
     }
   };
   wireChart(d);
+  if (dr.confirm) lockTicks(true);
 }
+// While a release confirmation is on screen the tick boxes are locked, so the list cannot drift from the sentence.
+function lockTicks(on) { document.querySelectorAll("#case .rel, #case [data-act=tickvis], #case [data-act=untick]").forEach(x => { x.disabled = on; }); }
 function paintTicks(d) {
   const dr = draft(d.case.id), n = d.units.length, rc = $("#relcount"); if (rc) rc.textContent = `${dr.ticks.size} of ${fmt(n)} ticked`;
   const b = $('[data-act="CHANGE"]'); if (b) { b.disabled = !dr.ticks.size; b.textContent = `Release ${dr.ticks.size} ticked…`; }
@@ -383,17 +402,21 @@ async function decide(d, kind) {
   if (!me) return openSignin();
   const c = d.case, dr = draft(c.id);
   const body = {case_id: c.id, decision: kind, reason: dr.reason, second_signer: dr.second || null, second_pin: dr.pin || null,
-    unit_ids: kind === "CHANGE" ? [...dr.ticks] : kind === "REJECT" ? d.units.map(u => u.unit_id) : [],
+    unit_ids: kind === "ACCEPT" ? [] : [...(dr.frozen || [])],
     client_id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random())};
   // Only releases use a second signature. An ACCEPT never sends one or any units, so a queued offline ACCEPT
   // can never be refused later for a missing PIN, and it can never release anything.
   if (kind === "ACCEPT") { body.second_signer = null; body.second_pin = null; body.unit_ids = []; }
+  else {  // a release sends only the unit list frozen when the confirmation was shown, and says so to the server
+    if (!dr.confirm || dr.confirm !== kind || !dr.frozen || !dr.frozen.length) return msg("Confirm the release first.");
+    body.confirmed_unit_ids = [...dr.frozen];
+  }
   if (!body.reason || body.reason.trim().length < 5) return msg("Write a reason first.");
   const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json", ...auth()}, body: JSON.stringify(body)});
   dr.pin = null;
-  if (r.cached && kind !== "ACCEPT") { dr.confirm = null; repaintDecision(d); return msg("Offline. Releasing units needs the server to check both signatures, so it can't be queued. Units stay on hold."); }
+  if (r.cached && kind !== "ACCEPT") { dr.confirm = null; dr.frozen = null; lockTicks(false); repaintDecision(d); return msg("Offline. Releasing units needs the server to check both signatures, so it can't be queued. Units stay on hold."); }
   if (r.cached) { setQ([...Q(), {...body, second_pin: null, _auth: auth(), _user: me.user}]); delete state.drafts[c.id]; renderCase(d); toast("Offline. Decision saved on this device; it syncs when the connection returns. Units stay on hold until then."); return; }
-  if (!r.ok) { dr.confirm = null; repaintDecision(d); return msg(r.data.error); }
+  if (!r.ok) { dr.confirm = null; dr.frozen = null; lockTicks(false); repaintDecision(d); return msg(r.data.error); }
   delete state.drafts[c.id];
   toast(kind === "ACCEPT" ? `Accepted. All ${fmt(d.units.length)} units stay quarantined.` : `${kind === "CHANGE" ? "Changed" : "Rejected"}. Decision recorded.`);
   await refresh();
