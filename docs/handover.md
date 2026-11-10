@@ -24,6 +24,7 @@ Build window: Tue 2026/11/10 11:00 SAST to Wed 2026/11/11 11:00 SAST. All times 
 | 15:53 | Two fixes ported from a tested logic baseline: a Change listing a unit outside the case is refused with nothing written; cross-case hold warning per case and per unit. 2 tests added; 62 pass with the starter data. |
 | 17:23 to 17:28 | Reproduced two missed regressions: Accept with selected unit IDs released those units without signatures; normal server restart erased reviewed cases and audit history. Server now ignores release selections for Accept, browser strips them, and SQLite persists beside the dataset by default. Four added tests, including the HTTP boundary and restart/retry preservation; all 66 pass with the official starter dataset. Independent review subsequently confirmed both fixes. |
 | 18:03 | Reviewed and merged the hold-only Accept and restart-persistence fixes (66 tests pass with the starter data). Service worker now bypasses the browser HTTP cache when installing the app shell. Pre-publication check matches whole words only. Demo user note corrected. |
+| 19:10 to 19:40 | Branch `ui/rethink`: split workspace, full queue with search and filters, evidence row, keyboard chart, release confirmation; queue limit, stale-response and lost-draft fixes with a new regression test. See docs/UI_RETHINK.md. Not merged. |
 
 ## How to verify
 See README "How to run it". `python3 -m holdline.evaluate data` reproduces every metric.

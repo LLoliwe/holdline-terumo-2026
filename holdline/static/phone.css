@@ -1,0 +1,86 @@
+/* HOLDLINE phone and narrow-screen rules (760 px and below). Seam for parallel work: phone layout lives here,
+   loaded after app.css so it wins at equal specificity. */
+@media (max-width:760px){
+ .brand .sub,.views a[data-view=evaluation]{display:none}
+ .bar{gap:10px;padding:0 10px}
+ .views{margin-left:0}
+ .context{font-size:11px;padding:0 10px}
+ main{height:calc(100vh - var(--bar) - var(--ctx))}
+ .sheet{padding:14px 12px 40px;gap:12px}
+ .chead h1{font-size:20px}
+ .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .facts div{border-left:0;border-top:1px solid var(--rule-2)}
+ .facts div:nth-child(-n+2){border-top:0}
+ .facts div:nth-child(even){border-left:1px solid var(--rule-2)}
+ .facts dd{font-size:17px}
+ .seg button{font-size:11px}
+ .twrap{max-height:none}
+ .who span,.who b{display:none}
+ .bar .btn.sm{padding:5px 8px}
+ .context{white-space:nowrap}
+}
+@media (max-width:380px){#help-open{display:none}.brand b{font-size:14px}}
+@media (max-width:760px){.overview{padding:20px 14px}.overview h1{font-size:22px}}
+@media (max-width:760px){
+ .unitsp thead{display:none}
+ .unitsp tbody tr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"sel unit st" "sel meta meta";gap:2px 10px;padding:9px 10px;border-bottom:1px solid var(--rule-2)}
+ .unitsp td{border:0;padding:0}
+ .unitsp .c-sel{grid-area:sel;padding-top:2px}
+ .unitsp .c-unit{grid-area:unit;white-space:normal}
+ .unitsp .c-st{grid-area:st}
+ .unitsp .c-comp,.unitsp .c-grp,.unitsp .c-exp{grid-row:2;font-size:12px;color:var(--ink-3)}
+ .unitsp .c-comp{grid-column:2;justify-self:start}
+ .unitsp .c-grp{grid-column:2;justify-self:center}
+ .unitsp .c-exp{grid-column:2/4;justify-self:end}
+ .chart .ax{font-size:17px}.chart .gapt{font-size:18px}
+}
+@media (max-width:760px){
+ .cmdbtn{display:none}
+ .decidebar{display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:10px;margin:12px 0 0;width:100%;padding:14px 16px;border:0;border-radius:10px;background:var(--ink);color:#fff;font:600 15px var(--sans);box-shadow:0 10px 26px rgba(17,17,22,.25);z-index:5;grid-column:1/-1;order:99}
+ .decidebar span{font:12px var(--mono);color:#C9CED3}
+}
+/* Phone first view: with no hold open, the landing overview comes first and the queue follows below it,
+   in one scroll. Decide bar clears content: bottom padding = bar (about 52 px) + 56 px + the safe-area inset. */
+@media (max-width:760px){
+ body[data-layout=page]:not([data-view=case]) main{display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+ body[data-layout=page]:not([data-view=case]) .case:has(.overview){display:block;order:-1;flex:none;overflow:visible;height:auto;border:0}
+ body[data-layout=page]:not([data-view=case]) .queue{flex:none;min-height:0;overflow:visible;border-top:1px solid var(--rule)}
+ body[data-layout=page]:not([data-view=case]) .list{overflow:visible;flex:none}
+ html body .sheet{padding-bottom:calc(52px + 56px + env(safe-area-inset-bottom))}
+ .decidebar{bottom:calc(10px + env(safe-area-inset-bottom))}
+}
+/* Phone case as a bottom sheet over the queue (Grok 3, 90e8b1e; behaviour kept, colours set to the night theme).
+   The grabber drags it down. The decide bar sits at the sheet foot above the home indicator. */
+.grabber,.ucards,.sheet-scrim{display:none}
+@media (max-width:760px){
+ body[data-layout=page][data-view=case] .queue{display:flex}
+ html body[data-layout=page][data-view=case] .case{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;height:92dvh;z-index:30;background:#121212;border-radius:22px 22px 0 0;box-shadow:0 -1px 0 rgba(255,255,255,.08);transform:translateY(var(--sheet-pull, 0px));transition:transform .52s var(--spring, cubic-bezier(.15,1.15,.3,1));overflow:hidden;visibility:visible}
+ .sheet-scrim{position:fixed;inset:0;z-index:25;border:0;padding:0;background:rgba(0,0,0,.6);cursor:pointer}
+ .sheet-scrim:not([hidden]){display:block}
+ body[data-layout=page] .case > .sheet{flex:1;min-height:0;overflow:auto}
+ .grabber{display:flex;justify-content:center;align-items:center;flex:none;width:100%;height:28px;border:0;background:transparent;touch-action:none}
+ .grabber span{width:42px;height:5px;border-radius:99px;background:#48484A}
+ .ucards{display:block;margin:4px 0 8px}
+ .ucards .cap{font-size:12px;color:var(--ink-3);margin:0 0 6px}
+ .ucard{padding:16px;border-radius:16px;background:#1C1C1E;min-height:132px;touch-action:pan-y}
+ .ucard .uid{font:600 20px/1.2 var(--mono);letter-spacing:-.02em;margin:0}
+ .ucard .umeta{color:var(--ink-2);margin:6px 0}
+ .tickbig{display:flex;align-items:center;gap:12px;min-height:48px;font-weight:600}
+ .tickbig input{width:22px;height:22px}
+ .ucar-nav{display:flex;gap:8px;align-items:center;margin-top:8px}
+ .ucar-nav .btn{min-height:44px;flex:1}
+ html body[data-layout=page] .case > .decidebar{flex:none;position:static;margin:0;border-radius:0;min-height:56px;padding:14px 16px calc(14px + env(safe-area-inset-bottom));font-size:17px}
+ html body[data-layout=page] .case > .sheet{padding-bottom:24px}
+ #case[data-confirming="1"] > .decidebar{display:none}
+ .decide .btn.primary.wide,.decide .btn.danger{min-height:52px;font-size:17px}
+ .slide{height:64px;border-radius:32px}
+ .slide input::-webkit-slider-thumb{width:56px;height:56px}
+}
+@media (prefers-reduced-motion: reduce){ html body .case{transition:none} }
+@media (max-width:760px){
+ html body[data-layout=page] .case > .sheet{display:flex;flex-direction:column;gap:14px}
+ html body[data-layout=page] .case > .sheet > *{flex:none;min-width:0}
+ html body .hero{gap:6px}
+ html body .hpeak{justify-items:start;grid-auto-flow:column;align-items:baseline;gap:10px}
+}
+@media (max-width:760px){html body .overview.morning .mrowhead,html body .overview.morning .week thead th:first-child{width:7.5rem;min-width:7.5rem}html body .overview.morning .mrowhead b{font-size:13px}html body .overview.morning .week{min-width:560px}html body .case>.handover{margin:16px 14px 0}}

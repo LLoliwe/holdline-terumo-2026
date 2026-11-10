@@ -11,7 +11,7 @@ def mk():
     server.STATE.update(cfg=cfg, db=db, temps={}, fac={}, cases=1, metrics={}); server.SESSIONS.clear()
     return cid
 
-class Http(unittest.TestCase):
+class _Base(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.srv = ThreadingHTTPServer(("127.0.0.1", 0), server.H)
@@ -31,6 +31,8 @@ class Http(unittest.TestCase):
         except urllib.error.HTTPError as e: return e.code, json.loads(e.read())
     def login(self, u, pin):
         return self.post("/api/login", {"user": u, "pin": pin})[1].get("token")
+
+class Http(_Base):
     def test_decide_without_session_refused(self):
         code, _ = self.post("/api/decide", {"case_id": self.cid, "decision": "REJECT", "actor": "demo.manager",
                                             "role": "qualified_releaser", "reason": "trust me", "second_signer": "x"})
@@ -53,6 +55,19 @@ class Http(unittest.TestCase):
         code, _ = self.post("/api/decide", {"case_id": self.cid, "decision": "REJECT", "reason": "probe 4.1C ok",
                                             "second_signer": "demo.officer", "second_pin": "1111"}, t)
         self.assertEqual(code, 403)
+    def test_release_must_match_confirmed_units(self):
+        t = self.login("demo.manager", "2222")
+        code, r = self.post("/api/decide", {"case_id": self.cid, "decision": "CHANGE", "reason": "probe 4.1C ok",
+                                            "unit_ids": ["U0", "U1"], "confirmed_unit_ids": ["U0"],
+                                            "second_signer": "demo.manager2", "second_pin": "3333"}, t)
+        self.assertEqual(code, 409, r)
+        db = server.STATE["db"]
+        self.assertNotIn("RELEASED", [x[0] for x in db.execute("SELECT state FROM case_units WHERE case_id=?", (self.cid,))])
+        self.assertEqual(db.execute("SELECT status FROM cases WHERE id=?", (self.cid,)).fetchone()[0], "OPEN")
+        code, r = self.post("/api/decide", {"case_id": self.cid, "decision": "CHANGE", "reason": "probe 4.1C ok",
+                                            "unit_ids": ["U0"], "confirmed_unit_ids": ["U0"],
+                                            "second_signer": "demo.manager2", "second_pin": "3333"}, t)
+        self.assertEqual(code, 200, r)
     def test_cannot_second_sign_yourself(self):
         t = self.login("demo.manager", "2222")
         code, _ = self.post("/api/decide", {"case_id": self.cid, "decision": "REJECT", "reason": "probe 4.1C ok",
@@ -80,3 +95,25 @@ class Http(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class QueueList(_Base):
+    """The operator queue must list every case of a status, not only the newest 200."""
+    def get(self, path, token=None):
+        req = urllib.request.Request(self.base + path, headers={"X-Holdline-Token": token} if token else {})
+        try:
+            with urllib.request.urlopen(req) as r: return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e: return e.code, json.loads(e.read())
+    def test_open_queue_returns_more_than_200_cases(self):
+        cfg, db = server.STATE["cfg"], server.STATE["db"]
+        server.STATE["fac"] = {"HSP-1": {"name": "Test Hospital", "county": "Test County"}}
+        for i in range(250):
+            ev = dict(facility_id="HSP-1", kind="EXCURSION", start=datetime(2026, 7, 1) + timedelta(hours=3 * i),
+                      end=datetime(2026, 7, 1, 2) + timedelta(hours=3 * i), peak=8.0, reason="t", hold=True)
+            store.open_case(db, ev, [dict(unit_id=f"Q{i}", component="RBC", blood_group="A+", expiry_date="2026-12-01")], cfg)
+        code, rows = self.get("/api/cases?status=OPEN", self.login("demo.officer", "1111"))
+        self.assertEqual(code, 200)
+        self.assertEqual(len(rows), 251)
+        self.assertEqual(len({r["id"] for r in rows}), 251)
+        self.assertTrue(all(r["facility_county"] == "Test County" for r in rows))
+        self.assertEqual([r["start"] for r in rows], sorted((r["start"] for r in rows), reverse=True))

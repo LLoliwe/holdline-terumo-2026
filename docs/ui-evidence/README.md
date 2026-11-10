@@ -1,0 +1,1 @@
+Screenshots in this folder: the desktop-1440_0 to _6 and phone-390_0 to _6 scenario sets use the full-history stress demo (`--since 2025-11-01`, 412 open holds, 9,910 units), because those scenario cases only exist there; the two *_default-window-overview.jpg shots use the app default window (since 2026-10-01, 33 open holds, 1,260 units).

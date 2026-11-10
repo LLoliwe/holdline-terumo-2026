@@ -40,12 +40,12 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 65 pass, 1 skipped without data
-HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 66 pass with data
+python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 67 pass, 1 skipped without data
+HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 68 pass with data
 python3 -m holdline.evaluate data                          # reproduces the numbers below
 ```
 
-Try it: sign in as demo.manager, open a case, tick one unit, write a reason, choose demo.manager2 as second signer with PIN 3333, press Change. Then sign in as demo.officer, turn the network off in dev tools and Accept another case: it queues, then syncs.
+Try it: sign in as demo.manager, open a case, write a reason, open "Release units", tick one unit, choose demo.manager2 as second signer with PIN 3333, press Release, then confirm. Keys: `/` search, `j`/`k` walk the queue, `Esc` back, `?` list. Then sign in as demo.officer, turn the network off in dev tools and Accept another case: it queues, then syncs.
 
 The default decision store is `DATA_DIR/.holdline/cases-<rules-and-window-hash>.db` (the resolved path is printed at startup). Restart with the same dataset, rules and `--since` date to resume decisions. Sessions still expire on process restart: sign in again as the original decision maker to sync queued Accepts. The starter CSVs are treated as a fixed dataset; use a separate dataset directory for revised inputs. A different rule configuration or date window uses a separate database. Back up the database while the server is stopped. For a read-only data directory, set `HOLDLINE_DB` to a writable file path; its parent must already exist. `HOLDLINE_DB=:memory:` explicitly starts a disposable demo whose decisions are lost on restart. No database or CSV belongs in Git.
 
@@ -102,7 +102,7 @@ Data quality note: the dataset README says 60 sensor glitch readings; the file c
 - **Languages**: English only for now.
 
 ## AI tools we used
-Built by Lebohang Loliwe, using AI coding agents (Claude via Quest, Grok, ChatGPT) under his direction.
+Built by Lebohang Loliwe, using AI coding agents under his direction.
 
 - **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, and analysed the dataset.
 - **Grok (xAI)**: project decisions (which build, demo, branding, publication timing) and review of claims.
@@ -111,6 +111,7 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 
 ## Bundled third-party material
 - IBM Plex Sans and IBM Plex Mono fonts (`holdline/static/fonts/`), SIL Open Font License 1.1, licence text in `holdline/static/fonts/OFL.txt`.
+- Four outline icons from Tabler Icons (MIT), vendored as inline SVG paths; licence text in `holdline/static/LICENSE-tabler.txt`.
 - No other third-party code; Python standard library only.
 
 ## Team
@@ -121,8 +122,12 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 ## Known limits and next steps
 - Synthetic data only; the user is a hypothesis; no clinician has reviewed the release rules.
 - Day-level residency: a unit in the fridge any part of a day counts as in it for that day of the event.
-- Two different counts: the header's "units in open holds" (9,910 on data since 2025-11-01) counts distinct units in open cases and leaves out units already expired on the day they sat in the fridge; the evaluation's 10,259 counts every unit on any flagged fridge-day of the whole year. They are different populations and are never compared.
+- Two different counts: the header's "units on hold" (1,260 in 33 open holds on the default window since 2026-10-01; 9,910 in 412 open holds on the full-history stress demo started with `--since 2025-11-01`) counts distinct units in open cases and leaves out units already expired on the day they sat in the fridge; the evaluation's 10,259 counts every unit on any flagged fridge-day of the whole year. They are different populations and are never compared.
 - Glitch hours inside a hot run are bridged (tested); metrics unchanged on this data.
 - Demo log-in only (synthetic users and PINs, in-memory sessions, no TLS): not real authentication. No live logger feed, no SMS gateway.
 - No hosted demo: hosting needs the dataset on a public server, which the starter kit does not clearly permit.
 - Next: probe-check step in the decision, Kiswahili interface, live logger ingest.
+
+## Alternatives tested
+
+A CUSUM detector (k = 0.5, h = 1) was tried on a side branch (`ui/rethink-grok2-algo`, 8d1c4c2). On the same synthetic data it scored precision 74.2% against 66.1%, recall 94.8% against 95.4%, 1,130 fewer false holds, 45 more exposed units missed, and 1,953 against 1,984 units held before transfusion day. It was tuned on the same data it was scored on, so the gain is unproven, and it misses more exposed units. Not adopted; the shipped rule and its numbers are unchanged. Mean kinetic temperature scored worse; gap filling, bitsets and Merkle hashing gave no gain.
