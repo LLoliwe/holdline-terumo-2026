@@ -16,6 +16,7 @@ SESSIONS = auth.SESSIONS  # token -> {user, created, seen}. In memory, expiring:
 DEMO_USERS = os.path.join(os.path.dirname(__file__), "config", "demo_users.json")
 MAX_BODY = 64 * 1024
 AUTH_READS = os.environ.get("HOLDLINE_AUTH_READS", "0") == "1"  # opt in: case, audit and unit reads need a session
+CASE_LIST_MAX = 5000  # upper bound on one queue response
 SENSITIVE_READS = ("/api/cases", "/api/case/", "/api/audit")
 
 def users_file():
@@ -135,8 +136,12 @@ class H(SimpleHTTPRequestHandler):
         if u.path == "/api/cases":
             st = q.get("status", ["OPEN"])[0]
             rows = db.execute("""SELECT c.*, COUNT(cu.unit_id) n FROM cases c LEFT JOIN case_units cu ON cu.case_id=c.id
-                                 WHERE c.status=? GROUP BY c.id ORDER BY c.start DESC LIMIT 200""", (st,)).fetchall()
-            return self._json([dict(r) | {"facility_name": STATE["fac"].get(r["facility_id"], {}).get("name")} for r in rows])
+                                 WHERE c.status=? GROUP BY c.id ORDER BY c.start DESC LIMIT ?""", (st, CASE_LIST_MAX)).fetchall()
+            # The queue used to stop at 200 rows, so a fresh full-history demo hid 212 of 412 open holds from the
+            # operator. Return the whole status list (bounded) so the client can search, filter and sort all of it.
+            fac = STATE["fac"]
+            return self._json([dict(r) | {"facility_name": fac.get(r["facility_id"], {}).get("name"),
+                                          "facility_county": fac.get(r["facility_id"], {}).get("county")} for r in rows])
         if u.path.startswith("/api/case/"):
             cid = u.path.split("/")[-1]
             c = db.execute("SELECT * FROM cases WHERE id=?", (cid,)).fetchone()

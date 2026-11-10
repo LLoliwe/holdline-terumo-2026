@@ -80,3 +80,25 @@ class Http(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class QueueList(Http):
+    """The operator queue must list every case of a status, not only the newest 200."""
+    def get(self, path, token=None):
+        req = urllib.request.Request(self.base + path, headers={"X-Holdline-Token": token} if token else {})
+        try:
+            with urllib.request.urlopen(req) as r: return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e: return e.code, json.loads(e.read())
+    def test_open_queue_returns_more_than_200_cases(self):
+        cfg, db = server.STATE["cfg"], server.STATE["db"]
+        server.STATE["fac"] = {"HSP-1": {"name": "Test Hospital", "county": "Test County"}}
+        for i in range(250):
+            ev = dict(facility_id="HSP-1", kind="EXCURSION", start=datetime(2026, 7, 1) + timedelta(hours=3 * i),
+                      end=datetime(2026, 7, 1, 2) + timedelta(hours=3 * i), peak=8.0, reason="t", hold=True)
+            store.open_case(db, ev, [dict(unit_id=f"Q{i}", component="RBC", blood_group="A+", expiry_date="2026-12-01")], cfg)
+        code, rows = self.get("/api/cases?status=OPEN", self.login("demo.officer", "1111"))
+        self.assertEqual(code, 200)
+        self.assertEqual(len(rows), 251)
+        self.assertEqual(len({r["id"] for r in rows}), 251)
+        self.assertTrue(all(r["facility_county"] == "Test County" for r in rows))
+        self.assertEqual([r["start"] for r in rows], sorted((r["start"] for r in rows), reverse=True))

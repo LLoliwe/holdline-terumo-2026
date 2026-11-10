@@ -1,25 +1,46 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HOLDLINE · cold chain hold queue</title><link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="app.css"></head>
-<body>
+<body class="layout-split">
+<a class="skip" href="#case">Skip to case</a>
 <header class="bar">
- <div class="brand"><svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true"><rect x="1" y="1" width="38" height="38" rx="4" fill="none" stroke="#fff" stroke-width="2"/><line x1="1" y1="15" x2="39" y2="15" stroke="#E0574F" stroke-width="3"/><path d="M6 30 L14 26 L20 28 L26 18 L34 22" fill="none" stroke="#fff" stroke-width="2"/></svg>
-  <div class="brand-t"><b>HOLDLINE</b><span class="sub">The system holds · only a person releases</span></div></div>
+ <div class="brand"><svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><rect x="1" y="1" width="38" height="38" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="1" y1="15" x2="39" y2="15" stroke="#E0574F" stroke-width="3.5"/><path d="M6 30 L14 26 L20 28 L26 18 L34 22" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
+  <b>HOLDLINE</b><span class="sub">The system holds. Only a person releases.</span></div>
+ <nav class="views" aria-label="Views"><a href="#/" data-view="queue" aria-current="page">Holds</a><a href="#/evaluation" data-view="evaluation">Evaluation</a></nav>
  <div class="right">
-  <span class="chip un" title="Synthetic users and PINs. The demo session expires after 30 minutes idle or 8 hours. Not real authentication.">Demo log-in</span>
-  <span id="net" class="chip ok">Online</span><span id="queue" class="chip un" style="display:none"></span>
-  <span class="who" id="who"></span>
-  <form id="login" class="who"><select id="luser" aria-label="Demo user"><option value="demo.officer">demo.officer (duty officer)</option><option value="demo.manager">demo.manager (qualified)</option><option value="demo.manager2">demo.manager2 (qualified)</option></select><input id="lpin" type="password" inputmode="numeric" placeholder="PIN" size="5" aria-label="PIN"><button class="btn chip ve">Sign in</button></form>
+  <span id="net" class="pill ok" role="status">Online</span><span id="sync" class="pill un" hidden></span>
+  <span id="who" class="who"></span>
+  <button id="signin-open" class="btn sm" type="button">Sign in</button>
+  <button id="help-open" class="btn sm ghost" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts (?)">?</button>
  </div>
- <div class="synth">Synthetic data · working prototype · not a medical device</div>
 </header>
-<section class="metrics" id="metrics" aria-label="Year summary on the synthetic dataset"></section>
-<main>
- <aside>
-  <div class="qhead"><span class="cap">Hold queue</span><span id="qcount" class="cap"></span></div>
-  <div class="tabs"><button data-s="OPEN" class="on">Open</button><button data-s="ACCEPTED">Accepted</button><button data-s="CHANGED">Changed</button><button data-s="REJECTED">Rejected</button><button data-s="NO_UNITS" title="Excursions logged where no units were in the fridge">No units</button></div>
-  <div id="list"></div>
- </aside>
- <article id="detail"><p class="empty">Pick a hold from the queue.</p></article>
+<div class="context" id="context">Synthetic data · working prototype · not a medical device</div>
+<dialog id="signin" aria-labelledby="signin-t"><form id="login" method="dialog">
+ <h2 id="signin-t">Sign in</h2>
+ <p class="hint">Demo log-in. Synthetic users and PINs, not real authentication. Sessions end after 30 minutes idle.</p>
+ <label>User<select id="luser"><option value="demo.officer">demo.officer · duty officer</option><option value="demo.manager">demo.manager · qualified releaser</option><option value="demo.manager2">demo.manager2 · qualified releaser</option></select></label>
+ <label>PIN<input id="lpin" type="password" inputmode="numeric" autocomplete="off" required></label>
+ <p id="lmsg" class="err" role="alert"></p>
+ <div class="row"><button class="btn primary" value="ok">Sign in</button><button class="btn ghost" value="cancel" formnovalidate type="button" id="signin-cancel">Cancel</button></div>
+</form></dialog>
+<dialog id="help" aria-labelledby="help-t"><h2 id="help-t">Keyboard</h2>
+ <dl class="keys"><dt>/</dt><dd>Search the queue</dd><dt>j / k or ↓ / ↑</dt><dd>Next / previous hold</dd><dt>Enter</dt><dd>Open the highlighted hold</dd><dt>Esc</dt><dd>Back to the queue</dd><dt>← / →</dt><dd>Step through readings when the chart has focus</dd><dt>?</dt><dd>This list</dd></dl>
+ <form method="dialog"><button class="btn">Close</button></form></dialog>
+<main id="main">
+ <section class="queue" id="queuepane" aria-label="Hold queue">
+  <div class="qtools">
+   <div class="search"><input id="q" type="search" placeholder="Search facility, county or case" aria-label="Search the queue" autocomplete="off"><kbd>/</kbd></div>
+   <div class="seg" role="tablist" aria-label="Status" id="tabs"></div>
+   <div class="filters" role="group" aria-label="Filters">
+    <button class="fchip" data-f="EXCURSION" aria-pressed="false"><span class="g ex">▲</span>Measured</button>
+    <button class="fchip" data-f="GAP" aria-pressed="false"><span class="g un">◌</span>Presumed</button>
+    <label class="sort">Sort <select id="sort"><option value="new">Newest</option><option value="old">Oldest</option><option value="units">Most units</option></select></label>
+   </div>
+   <div class="qcount" id="qcount" aria-live="polite"></div>
+  </div>
+  <div class="list" id="list" role="listbox" aria-label="Holds" tabindex="0"></div>
+ </section>
+ <section class="case" id="case" tabindex="-1" aria-label="Case"><div class="empty">Pick a hold from the queue.</div></section>
+ <section class="evaluation" id="evaluation" hidden aria-label="Evaluation"></section>
 </main>
-
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script></body></html>
