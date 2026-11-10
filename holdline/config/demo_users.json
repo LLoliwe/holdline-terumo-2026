@@ -1,5 +1,5 @@
 {
-  "_note": "DEMO ONLY. Synthetic users and PINs for the hackathon demo. Not real authentication: no hashing policy, no lockout, no TLS. Replace with the site's identity system before any real use.",
+  "_note": "DEMO ONLY. Synthetic users and PINs for the hackathon demo. Not real authentication: public PINs, no hashing policy, demo-grade lockout only, no TLS. Replace with the site's identity system before any real use.",
   "users": {
     "demo.officer": {"role": "duty_officer", "pin": "1111", "name": "Duty officer (demo)"},
     "demo.manager": {"role": "qualified_releaser", "pin": "2222", "name": "Blood bank manager, qualified (demo)"},

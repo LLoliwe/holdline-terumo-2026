@@ -1,4 +1,4 @@
-# Verification — 10 November 2026
+# Verification, 2026/11/10
 
 Baseline: public `b47bc420190208f8e20b13e0df1ff8f1bb990a84`. Its existing 62 tests passed on the official synthetic dataset before these changes.
 

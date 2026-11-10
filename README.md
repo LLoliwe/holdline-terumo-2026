@@ -106,7 +106,7 @@ Built by Lebohang Loliwe, using AI coding agents (Claude via Quest, Grok, ChatGP
 
 - **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, and analysed the dataset.
 - **Grok (xAI)**: project decisions (which build, demo, branding, publication timing) and review of claims.
-- **ChatGPT / Codex (OpenAI)**: earlier research, restart-persistence and hold-only Accept fixes, regression tests, browser workflow verification and submission preparation.
+- **ChatGPT and Codex (OpenAI)**: research, code, tests and browser checks under the entrant's direction.
 Every number in this README was produced by the code in this repo (`python3 -m holdline.evaluate`).
 
 ## Bundled third-party material
