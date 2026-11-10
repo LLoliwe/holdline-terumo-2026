@@ -1,4 +1,4 @@
-# HOLDLINE failure modes (code as of commit 29315d0, 2026/11/10)
+# HOLDLINE failure modes (code as of commit 8ab5869, 2026/11/10)
 
 Scope: the prototype as built, running locally on synthetic data. "Tested" names the automated test. A blank Test cell means the mode is handled in code but has no automated test.
 
