@@ -108,7 +108,7 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 ## Known limits and next steps
 - Synthetic data only; the user is a hypothesis; no clinician has reviewed the release rules.
 - Day-level residency: a unit in the fridge any part of the day counts as in it for that day's event.
-- A glitch reading inside a hot run breaks the run (tested, documented); next: bridge single glitch hours.
+- Glitch hours inside a hot run are bridged (tested); metrics unchanged on this data.
 - No real authentication, no live logger feed, no SMS gateway.
 - No hosted demo: hosting needs the dataset on a public server, which the starter kit does not clearly permit.
 - Next: probe-check step in the decision, Kiswahili interface, live logger ingest.

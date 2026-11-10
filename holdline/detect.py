@@ -43,8 +43,12 @@ def holdline_events(facility_id, readings, outs, cfg):
             peak = max(v for _, v in run)
             ev.append(dict(facility_id=facility_id, kind="EXCURSION", start=run[0][0], end=run[-1][0], peak=peak,
                            hold=True, reason=f"{len(run)} consecutive hourly readings above {lim:g}°C, peak {peak:.1f}°C"))
+    glitch_t = {t for t, _ in glitches}
     prev = None
     for t, v in valid:
+        # a gap made only of glitch hours is not silence: bridge it so a hot run isn't broken
+        if prev is not None and t - prev[0] > H and all(prev[0] + H * k in glitch_t for k in range(1, int((t - prev[0]) / H))):
+            prev = (t - H, prev[1])
         if prev is not None and t - prev[0] > H:
             close_run(); run = []
             gap_h = int((t - prev[0]) / H) - 1

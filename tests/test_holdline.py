@@ -22,10 +22,10 @@ class Detector(unittest.TestCase):
         ev = detect.holdline_events("F", series([4, 99.9, 99.9, 4, -99.0, 0.0, 4]), [], CFG)
         self.assertEqual([e["kind"] for e in ev].count("GLITCH"), 4)
         self.assertFalse([e for e in ev if e["hold"]])
-    def test_glitch_does_not_break_a_real_run_into_a_hold(self):
-        # glitch between two hot hours leaves a 2 h hole, so the run is broken: no hold, but not a crash
+    def test_glitch_inside_hot_run_is_bridged(self):
         ev = detect.holdline_events("F", series([4, 7, 99.9, 7, 4]), [], CFG)
         self.assertTrue(any(e["kind"] == "GLITCH" for e in ev))
+        self.assertEqual([e["kind"] for e in ev if e["hold"]], ["EXCURSION"])
     def test_gap_with_unbacked_power_cut_is_presumed_hot(self):
         rs = series([4, 4] + [None] * 5 + [5, 4])
         outs = [(T0 + timedelta(hours=2), T0 + timedelta(hours=6), False)]
