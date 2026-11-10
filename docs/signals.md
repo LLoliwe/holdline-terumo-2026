@@ -3,10 +3,9 @@
 All times SAST (UTC+2) with EAT (UTC+3) in brackets. Sources: Lebo's Gmail (lebo@ / partnerships@pryntor.co.za), the official technical phase brief (Google Doc, 2026/11/09), and the Applicant's Kit on Drive.
 
 ## Status
-- Shortlisted: 1 of 10 teams from 362 applications (25 countries). Placed in Team TrustLedger, challenge area **data quality and cold chain**.
-- Team per organiser: Lebohang Loliwe (South Africa), Admire Chitove (Zimbabwe), Okoye Chiagozie Delight (Nigeria), Isaac Briandt (Ghana).
-- Solo request: open. Hany wrote on 2026/10/25: "I have recorded against your application that you do not wish to be matched or assigned to a team, and we will not add you to one without discussing it with you first." Lebo asked to compete individually on 2026/11/09 19:42, 2026/11/10 07:04 (with participation confirmed), 07:13 (to info@talo.africa) and 10:54. No reply as of 12:00.
-- Roster filed as TrustLedger at 11:52 (Lebo approved 11:45), with a note that the solo request is open.
+- Shortlisted: 1 of 10 teams from 362 applications (25 countries). Challenge area **data quality and cold chain**.
+- Entry: individual, confirmed by Hany (Talo) at 12:19 on 2026/11/10; still eligible for the overall prize.
+- The 11:52 roster form was filed under a team name; it needs correcting once Lebo approves.
 
 ## Deadlines
 | SAST | EAT | What |
@@ -43,8 +42,9 @@ Working prototype 25 · Technical depth and architecture 20 · AI and data appro
 - Example real trace used in the designs: RBTC-MSA, 2025/11/24, power cut 12:29 with no backup (18.0 h), 4.0°C to 14.9°C by 23:00.
 
 ## Open questions
-1. Solo vs TrustLedger (Hany).
+1. RESOLVED 12:19: individual entry.
 2. Showcase slot vs exam on Fri 13 Nov.
 3. Organisers' GitHub usernames (asked on the form) or make the repo public early.
-4. Teammates' GitHub usernames, so they can push.
+4. Not needed now (individual entry).
 5. Terumo BCT's written answers on terms, marketing consent and recordings (promised 2026/10/25, never received).
+

@@ -7,7 +7,7 @@ State: **draft**. The visual system is rendered as static mock-ups. Nothing has 
 |---|---|---|
 | 10:47 | Hany (Talo) | Kickoff email to about 40 participants. Build clock 11:00 SAST. |
 | 10:54 | Lebo approved, Quest sent | Follow-up to Hany (cc Suban) on the shortlist thread: solo entry, roster name, showcase slot. No reply yet. |
-| 11:42 | Lebo approved, Quest sent | Reply to Okoye with Lebo's number, noting the solo request is open. |
+| 11:42 | Lebo approved, Quest sent | Reply to a former roster contact, noting the solo request was open. |
 | 11:43 | Lebo | Asked to file all signals, build a visual system, and write a handover. |
 | 11:44 | Lebo | Asked for the SNR OMEGA loop (PRY-441). |
 | 11:45 | Lebo | Approved filing the roster under a team name (superseded 12:19 by the individual entry). |
