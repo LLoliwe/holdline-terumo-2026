@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" font-family="IBM Plex Sans, sans-serif">
+<rect width="1200" height="640" fill="#F5F4EF"/>
+<text x="40" y="52" font-size="26" font-weight="600" fill="#111116">HOLDLINE architecture</text>
+<text x="40" y="80" font-size="14" fill="#6B7781">Standard-library Python 3 · SQLite · runs on one laptop at 127.0.0.1 · synthetic starter dataset</text>
+<g font-size="14" fill="#111116">
+<rect x="40" y="120" width="240" height="200" rx="4" fill="#fff" stroke="#DAD8CF"/>
+<text x="56" y="148" font-weight="600">Inputs (CSV)</text>
+<text x="56" y="178">temperature_logs</text><text x="56" y="202">power_outages</text><text x="56" y="226">units · transfers</text><text x="56" y="250">facilities</text>
+<text x="56" y="290" fill="#6B7781" font-size="12">config/kenya.json (thresholds)</text>
+<rect x="340" y="120" width="250" height="200" rx="4" fill="#fff" stroke="#DAD8CF"/>
+<text x="356" y="148" font-weight="600">Detect (detect.py)</text>
+<text x="356" y="178">drop glitch codes</text><text x="356" y="202">2+ h above 6°C → EXCURSION</text><text x="356" y="226">gap + power cut → PRESUMED</text><text x="356" y="250">other gap → UNVERIFIED</text><text x="356" y="274">cool box above 10°C</text>
+<rect x="650" y="120" width="250" height="200" rx="4" fill="#fff" stroke="#DAD8CF"/>
+<text x="666" y="148" font-weight="600">Trace (exposure.py)</text>
+<text x="666" y="178">where was each unit,</text><text x="666" y="202">each day, from transfers</text><text x="666" y="238">→ units in that fridge</text><text x="666" y="262">that day go ON HOLD</text>
+<rect x="960" y="120" width="200" height="200" rx="4" fill="#111116"/>
+<text x="976" y="148" font-weight="600" fill="#fff">Hold queue</text>
+<text x="976" y="178" fill="#fff">one case per event</text><text x="976" y="202" fill="#fff">SMS text ≤160 chars</text><text x="976" y="226" fill="#fff">(simulated)</text>
+<line x1="980" y1="250" x2="1140" y2="250" stroke="#E0574F" stroke-width="3"/>
+<rect x="340" y="380" width="400" height="200" rx="4" fill="#fff" stroke="#DAD8CF"/>
+<text x="356" y="408" font-weight="600">Person in control (store.decide + server session)</text>
+<text x="356" y="438">Accept: keep all quarantined (any signed-in role)</text>
+<text x="356" y="462">Change: release ticked units</text><text x="356" y="486">Reject: lift the hold</text>
+<text x="356" y="516">Release = qualified role + reason + second</text><text x="356" y="540">qualified signer, PIN checked by the server</text>
+<rect x="800" y="380" width="360" height="200" rx="4" fill="#fff" stroke="#DAD8CF"/>
+<text x="816" y="408" font-weight="600">Audit (SQLite)</text>
+<text x="816" y="438">append-only: triggers block</text><text x="816" y="462">UPDATE and DELETE</text>
+<text x="816" y="492">hash = sha256(prev_hash + row)</text><text x="816" y="516">chain re-checked, shown in header</text>
+<rect x="40" y="380" width="240" height="200" rx="4" fill="#fff" stroke="#DAD8CF"/>
+<text x="56" y="408" font-weight="600">Browser UI</text>
+<text x="56" y="438">service worker: opens offline</text><text x="56" y="462">last data cached on device</text><text x="56" y="486">Accept queued offline,</text><text x="56" y="510">replayed once (client_id)</text><text x="56" y="534">releases need the server</text>
+</g>
+<g stroke="#111116" stroke-width="2" fill="none" marker-end="url(#a)">
+<path d="M280 220 H336"/><path d="M590 220 H646"/><path d="M900 220 H956"/><path d="M1060 320 V350 H540 V376"/><path d="M740 480 H796"/><path d="M336 480 H284"/>
+</g>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#111116"/></marker></defs>
+<text x="40" y="616" font-size="12" fill="#6B7781">HOLDLINE only holds. A person releases. Demo log-in, synthetic data, not a medical device.</text>
+</svg>

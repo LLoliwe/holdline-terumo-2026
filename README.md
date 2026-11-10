@@ -48,7 +48,9 @@ python3 -m holdline.evaluate data                          # reproduces the numb
 Try it: sign in as demo.manager, open a case, tick one unit, write a reason, choose demo.manager2 as second signer with PIN 3333, press Change. Then sign in as demo.officer, turn the network off in dev tools and Accept another case: it queues, then syncs.
 
 ## Architecture
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+![HOLDLINE architecture](docs/architecture.png)
+
+Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```
 temperature_logs, power_outages, transfers, units (CSV)
