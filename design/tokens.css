@@ -1,14 +1,14 @@
 /* HOLDLINE visual system v0.2 · draft · working name, team-neutral */
 @import url('fonts.css');
 :root{
-  --ink:#0F1B24; --ink-2:#3A4752; --ink-3:#6B7781;
+  --ink:#111116; --ink-2:#3A4752; --ink-3:#6B7781;
   --paper:#F5F4EF; --surface:#FFFFFF; --rule:#DAD8CF; --rule-2:#ECEAE3;
   /* states: every state has colour + shape + word, never colour alone */
   --in-range:#1F6F55;   --in-range-bg:#E3EFE9;   /* circle, filled */
   --excursion:#B3261E;  --excursion-bg:#F8E3E0;  /* triangle, filled */
   --unverified:#8A5A00; --unverified-bg:#F5EBD3; /* dashed circle, hatched gaps */
   --verified:#1B4F8A;   --verified-bg:#E1EAF5;   /* square with tick */
-  --held:#0F1B24;       /* black bar: a person put the unit on hold */
+  --held:#111116;       /* black bar: a person put the unit on hold */
   --band-safe:rgba(31,111,85,.08);
   --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
   --r:4px; --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
