@@ -2,7 +2,7 @@
 
 python -m holdline.server DATA_DIR [--port 8080] [--since 2026-10-01]
 """
-import sys, os, json, threading
+import sys, os, json, threading, secrets, hmac
 from datetime import date, datetime, timedelta
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -11,6 +11,15 @@ from . import load_config, data, store, evaluate
 STATIC = os.path.join(os.path.dirname(__file__), "static")
 LOCK = threading.Lock()
 STATE = {}
+SESSIONS = {}  # token -> username. In memory: a restart signs everyone out.
+
+def users():
+    with open(os.path.join(os.path.dirname(__file__), "config", "demo_users.json")) as f:
+        return json.load(f)["users"]
+
+def check_pin(username, pin):
+    u = users().get(username or "")
+    return u if u and hmac.compare_digest(str(pin or ""), u["pin"]) else None
 
 def setup(path, since):
     cfg = load_config()
@@ -60,21 +69,48 @@ class H(SimpleHTTPRequestHandler):
                 sms=[dict(r) for r in db.execute("SELECT * FROM sms_outbox WHERE case_id=?", (cid,))]))
         if u.path == "/api/audit":
             return self._json([dict(r) for r in db.execute("SELECT * FROM audit ORDER BY seq DESC LIMIT 100")])
+        if u.path == "/api/me":
+            name = SESSIONS.get(self.headers.get("X-Holdline-Token", ""))
+            return self._json({"user": name, "role": users()[name]["role"]} if name else {"user": None})
+        if u.path == "/api/users":
+            return self._json([{"user": k, "name": v["name"], "role": v["role"]} for k, v in users().items()])
         if u.path == "/healthz":
             return self._json({"ok": True})
         return super().do_GET()
     def do_POST(self):
         u = urlparse(self.path)
-        if u.path != "/api/decide":
-            return self._json({"error": "not found"}, 404)
         try:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+        except ValueError:
+            return self._json({"error": "bad JSON"}, 400)
+        if u.path == "/api/login":
+            usr = check_pin(body.get("user"), body.get("pin"))
+            if not usr:
+                return self._json({"error": "wrong user or PIN"}, 401)
+            tok = secrets.token_urlsafe(24); SESSIONS[tok] = body["user"]
+            return self._json({"token": tok, "user": body["user"], "role": usr["role"]})
+        if u.path != "/api/decide":
+            return self._json({"error": "not found"}, 404)
+        # Identity comes from the server session, never from the request body.
+        actor = SESSIONS.get(self.headers.get("X-Holdline-Token", ""))
+        if not actor:
+            return self._json({"error": "sign in first"}, 401)
+        role = users()[actor]["role"]
+        second = None
+        if body.get("second_signer"):
+            if not check_pin(body.get("second_signer"), body.get("second_pin")):
+                return self._json({"error": "second signer PIN not verified"}, 403)
+            if users()[body["second_signer"]]["role"] != "qualified_releaser":
+                return self._json({"error": "second signer must also be a qualified releaser"}, 403)
+            second = body["second_signer"]
+        try:
             with LOCK:
-                r = store.decide(STATE["db"], body.get("case_id"), body.get("decision"), body.get("actor"), body.get("role"),
-                                 body.get("reason"), body.get("unit_ids"), body.get("client_id"), body.get("second_signer"),
-                                 STATE["cfg"])
+                r = store.decide(STATE["db"], body.get("case_id"), body.get("decision"), actor, role,
+                                 body.get("reason"), body.get("unit_ids"), body.get("client_id"), second, STATE["cfg"])
             return self._json(r)
-        except (ValueError, PermissionError, KeyError) as e:
+        except PermissionError as e:
+            return self._json({"error": str(e)}, 403)
+        except (ValueError, KeyError) as e:
             return self._json({"error": str(e)}, 400)
 
 def main():
@@ -82,8 +118,10 @@ def main():
     path = a[0] if a and not a[0].startswith("--") else os.environ.get("HOLDLINE_DATA", "data")
     port = int(a[a.index("--port") + 1]) if "--port" in a else int(os.environ.get("PORT", 8080))
     since = date.fromisoformat(a[a.index("--since") + 1]) if "--since" in a else date(2026, 10, 1)
+    host = os.environ.get("HOLDLINE_HOST", "127.0.0.1")  # local only by default
     setup(path, since)
-    ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
+    print(f"Serving on http://{host}:{port} (demo log-in only, not real authentication)", flush=True)
+    ThreadingHTTPServer((host, port), H).serve_forever()
 
 if __name__ == "__main__":
     main()

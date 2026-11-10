@@ -28,14 +28,27 @@ function paintNet() {
 async function flush() {
   let q = Q(), left = [];
   for (const d of q) {
-    const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(d)});
+    const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json", ...(d._auth || {})}, body: JSON.stringify(d)});
     if (r.cached) { left.push(d); }
     else if (!r.ok) alertBox("A queued decision was refused when it synced: " + (r.data && r.data.error));
   }
   setQ(left); if (q.length !== left.length) { load(); }
 }
 function alertBox(m) { const e = $("#msg"); if (e) { e.textContent = m; e.className = "err"; } else alert(m); }
-const user = () => { const [actor, role] = $("#user").value.split("|"); return {actor, role}; };
+let me = JSON.parse(localStorage.getItem("hl.me") || "null");
+const user = () => me ? {actor: me.user, role: me.role} : {actor: null, role: null};
+const auth = () => me ? {"X-Holdline-Token": me.token} : {};
+function paintWho() {
+  $("#who").innerHTML = me ? `Signed in: <b>${esc(me.user)}</b> · <a href="#" id="out" style="color:#fff">sign out</a>` : "";
+  $("#login").style.display = me ? "none" : "";
+  if (me) $("#out").onclick = e => { e.preventDefault(); me = null; localStorage.removeItem("hl.me"); paintWho(); state.sel && detail(); };
+}
+$("#login").onsubmit = async e => {
+  e.preventDefault();
+  const r = await api("/api/login", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({user: $("#luser").value, pin: $("#lpin").value})});
+  if (r.cached || !r.ok) return alert(r.cached ? "Offline: sign in needs the server once." : r.data.error);
+  me = r.data; localStorage.setItem("hl.me", JSON.stringify(me)); $("#lpin").value = ""; paintWho(); state.sel && detail();
+};
 
 async function summary() {
   const r = await api("/api/summary"); if (!r.data) return;
@@ -97,9 +110,9 @@ async function detail() {
   ${open ? `<div class="card dec"><b>Decision</b>
    <p style="font-size:14px;color:var(--ink-2);margin:0">HOLDLINE only holds. A person decides. <b>Accept</b> keeps every unit quarantined for discard. <b>Change</b> releases only the ticked units. <b>Reject</b> lifts the hold on all units. Any release needs the qualified manager and a second signature.</p>
    <textarea id="reason" rows="2" placeholder="Reason (required), e.g. units moved to backup fridge at 12:40, probe check 4.1°C"></textarea>
-   <input id="second" placeholder="Second signer (required to release)">
+   <div class="row"><select id="second" aria-label="Second signer"><option value="">Second signer (required to release)</option><option value="demo.manager">demo.manager</option><option value="demo.manager2">demo.manager2</option></select><input id="spin" type="password" inputmode="numeric" placeholder="Second signer PIN" aria-label="Second signer PIN"></div>
    <div class="row"><button class="btn chip ex" data-d="ACCEPT">Accept hold</button><button class="btn chip un" data-d="CHANGE" ${u.role !== "qualified_releaser" ? "disabled" : ""}>Change: release ticked</button><button class="btn chip ve" data-d="REJECT" ${u.role !== "qualified_releaser" ? "disabled" : ""}>Reject hold</button></div>
-   ${u.role !== "qualified_releaser" ? `<p style="font-size:13px;color:var(--ink-3);margin:0">Signed in as duty officer: you can confirm a hold, not release units.</p>` : ""}
+   ${!me ? `<p class="err" style="margin:0">Sign in (demo log-in) to decide.</p>` : u.role !== "qualified_releaser" ? `<p style="font-size:13px;color:var(--ink-3);margin:0">Signed in as duty officer: you can confirm a hold, not release units.</p>` : ""}
    ${pending ? `<p class="chip un">A decision for this case is waiting to sync.</p>` : ""}
    <p id="msg"></p></div>` : ""}
   <div class="card"><b>SMS fallback (simulated, not sent)</b><p style="font-size:13px;color:var(--ink-3)">For sites with no data connection. ${sms.length ? sms[0].body.length + " of 160 characters." : ""}</p>${sms.map(s => `<div class="sms">${esc(s.body)}</div>`).join("")}</div>
@@ -107,18 +120,20 @@ async function detail() {
   el.querySelectorAll("[data-d]").forEach(b => b.onclick = () => decide(c.id, b.dataset.d));
 }
 async function decide(id, d) {
-  const u = user(), body = {case_id: id, decision: d, actor: u.actor, role: u.role, reason: $("#reason").value,
-    second_signer: $("#second").value || null, unit_ids: [...document.querySelectorAll(".rel:checked")].map(x => x.value),
+  if (!me) return alertBox("Sign in first.");
+  const body = {case_id: id, decision: d, reason: $("#reason").value,
+    second_signer: $("#second").value || null, second_pin: $("#spin").value || null, unit_ids: [...document.querySelectorAll(".rel:checked")].map(x => x.value),
     client_id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random())};
   if (!body.reason || body.reason.trim().length < 5) return alertBox("Write a reason first.");
-  const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
-  if (r.cached) { setQ([...Q(), body]); alertBox("Offline. Decision saved on this device and will sync when the connection returns. Units stay on hold until then."); return; }
+  const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json", ...auth()}, body: JSON.stringify(body)});
+  if (r.cached && d !== "ACCEPT") return alertBox("Offline. Releasing units needs the server to check both signatures, so it can't be queued. Units stay on hold.");
+  if (r.cached) { setQ([...Q(), {...body, second_pin: null, _auth: auth()}]); alertBox("Offline. Decision saved on this device and will sync when the connection returns. Units stay on hold until then."); return; }
   if (!r.ok) return alertBox(r.data.error);
   await load();
 }
 async function load() { await summary(); await list(); if (state.sel) await detail(); paintNet(); }
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { document.querySelectorAll(".tabs button").forEach(x => x.classList.remove("on")); b.classList.add("on"); state.status = b.dataset.s; list(); });
-$("#user").onchange = () => state.sel && detail();
+paintWho();
 window.addEventListener("online", () => online(true)); window.addEventListener("offline", () => online(false));
 setInterval(() => { if (Q().length) flush(); }, 10000);
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
