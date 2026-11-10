@@ -20,11 +20,11 @@ A working web app plus a tested Python engine:
 1. **Excursion detector**: reads hourly fridge logs, drops known glitch codes, raises a hold on 2+ consecutive hours above 6°C.
 2. **Logger-gap detector**: a silence of 3+ hours that overlaps a power cut without backup, or that ends above 6°C, becomes a *presumed* excursion. Other gaps are shown as *unverified* (no hold).
 3. **Cool box check**: any transfer whose cool box went above 10°C holds that unit. On this dataset it fires **zero times**: no transfer records a cool box above 10°C.
-4. **Auto-hold queue**: each event becomes a case listing every unit that was in that fridge that day.
-5. **Person-in-control decision**: Accept (keep all quarantined), Change (release only ticked units) or Reject (lift the hold). Reason always required. Only a qualified manager can release, and every release needs a second qualified person whose PIN the server checks. Identity comes from the server session, never from what the browser sends. HOLDLINE never releases anything itself.
+4. **Auto-hold queue**: each event becomes a case listing every unit that was in that fridge on any day of the event. An event at a fridge with no units recorded is logged in the audit trail under "No units" and kept out of the decision queue.
+5. **Person-in-control decision**: Accept (keep all quarantined), Change (release only ticked units) or Reject (lift the hold). Reason always required. Only a qualified manager can release, and every release needs a second qualified person whose PIN the server checks. Identity comes from the server session, never from what the browser sends. Demo sessions expire (30 minutes idle, 8 hours at most), wrong PINs lock the user out for a while, and the server refuses cross-site, non-JSON and oversized requests. HOLDLINE never releases anything itself.
 6. **Append-only, hash-chained audit log** in SQLite: database triggers block UPDATE/DELETE, and a SHA-256 chain exposes any edit made around the triggers. Shown live in the header.
 7. **SMS fallback (simulated, nothing is sent)**: a 160-character-or-less alert per hold for sites with no data.
-8. **Offline-tolerant UI**: app shell cached by a service worker, last data cached on the device, a decision to keep units on hold (Accept) made offline is queued and replayed with an idempotency key, so a retry is never applied twice. Releases can't be queued offline, because the server must check both signatures. Units stay on hold until then.
+8. **Offline-tolerant UI**: app shell cached by a service worker, last data and the 20 newest open cases cached on the device, a decision to keep units on hold (Accept) made offline is queued and replayed with an idempotency key, so a retry is never applied twice. Releases can't be queued offline, because the server must check both signatures. Units stay on hold until then.
 
 Mocked or not finished: SMS is not sent (no gateway); log-in is a **demo log-in** (three synthetic users with PINs in `holdline/config/demo_users.json`), not real authentication; sessions are in memory; the data is the organiser's synthetic set loaded at start-up, not a live logger feed.
 
@@ -40,8 +40,8 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest -v tests.test_holdline tests.test_server                 # 30 tests (engine + HTTP security), no data needed
-HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server   # 31: adds the end-to-end metrics check
+python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening                 # 59 tests (engine, HTTP, security hardening), no data needed
+HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening   # 60: adds the end-to-end metrics check
 python3 -m holdline.evaluate data                          # reproduces the numbers below
 ```
 
@@ -98,10 +98,16 @@ Data quality note: the dataset README says 60 sensor glitch readings; the file c
 - **Languages**: English only for now.
 
 ## AI tools we used
-- **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, and analysed the dataset.
+Built by Lebohang Loliwe, using AI coding agents (Claude via Quest, Grok, ChatGPT) under his direction.
+
+- **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, analysed the dataset, and did the UI redesign and security hardening.
 - **Grok (xAI)**: project decisions (which build, demo, branding, publication timing) and review of claims.
 - **ChatGPT (OpenAI)**: earlier research and planning notes outside this repo.
 Every number in this README was produced by the code in this repo (`python3 -m holdline.evaluate`).
+
+## Bundled third-party material
+- IBM Plex Sans and IBM Plex Mono fonts (`holdline/static/fonts/`), SIL Open Font License 1.1, licence text in `holdline/static/fonts/OFL.txt`.
+- No other third-party code; Python standard library only.
 
 ## Team
 | Name | Role | Country | Presenting Friday (in person / online) |
@@ -110,7 +116,8 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 
 ## Known limits and next steps
 - Synthetic data only; the user is a hypothesis; no clinician has reviewed the release rules.
-- Day-level residency: a unit in the fridge any part of the day counts as in it for that day's event.
+- Day-level residency: a unit in the fridge any part of a day counts as in it for that day of the event.
+- Two different counts: the header's "units in open holds" (9,910 on data since 2025-11-01) counts distinct units in open cases and leaves out units already expired on the day they sat in the fridge; the evaluation's 10,259 counts every unit on any flagged fridge-day of the whole year. They are different populations and are never compared.
 - Glitch hours inside a hot run are bridged (tested); metrics unchanged on this data.
 - Demo log-in only (synthetic users and PINs, in-memory sessions, no TLS): not real authentication. No live logger feed, no SMS gateway.
 - No hosted demo: hosting needs the dataset on a public server, which the starter kit does not clearly permit.

@@ -2,24 +2,55 @@
 
 python -m holdline.server DATA_DIR [--port 8080] [--since 2026-10-01]
 """
-import sys, os, json, threading, secrets, hmac
+import sys, time, os, json, threading, ipaddress
 from datetime import date, datetime, timedelta
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-from . import load_config, data, store, evaluate
+from . import load_config, data, store, evaluate, auth
 
 STATIC = os.path.join(os.path.dirname(__file__), "static")
 LOCK = threading.Lock()
 STATE = {}
-SESSIONS = {}  # token -> username. In memory: a restart signs everyone out.
+SESSIONS = auth.SESSIONS  # token -> {user, created, seen}. In memory, expiring: see auth.py
+DEMO_USERS = os.path.join(os.path.dirname(__file__), "config", "demo_users.json")
+MAX_BODY = 64 * 1024
+AUTH_READS = os.environ.get("HOLDLINE_AUTH_READS", "0") == "1"  # opt in: case, audit and unit reads need a session
+SENSITIVE_READS = ("/api/cases", "/api/case/", "/api/audit")
+
+def users_file():
+    return os.environ.get("HOLDLINE_USERS", DEMO_USERS)  # point at a file outside the repo to keep PINs out of it
 
 def users():
-    with open(os.path.join(os.path.dirname(__file__), "config", "demo_users.json")) as f:
+    with open(users_file()) as f:
         return json.load(f)["users"]
 
 def check_pin(username, pin):
-    u = users().get(username or "")
-    return u if u and hmac.compare_digest(str(pin or ""), u["pin"]) else None
+    """The user record if the PIN is right. Wrong tries lock that name for a growing time (it unlocks by itself),
+    and a locked name is refused even with the right PIN. Raises Locked. Used for log-in and second signatures."""
+    name = str(username or "")[:64]
+    key = "u:" + name
+    wait = auth.locked_for(key)
+    if wait:
+        raise Locked(wait)
+    u = users().get(name)
+    ok = bool(u) and auth.pin_ok(u, pin)
+    if not u:
+        auth.pin_ok({"pin": "x"}, pin)  # similar work for unknown names
+    auth.record(key, ok)
+    return u if ok else None
+
+class Locked(Exception):
+    def __init__(self, wait): self.wait = wait
+
+def loopback(host):
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return host == "localhost"
+
+def allowed_hosts():
+    extra = [h.strip().lower() for h in os.environ.get("HOLDLINE_ALLOWED_HOSTS", "").split(",") if h.strip()]
+    return {"localhost", "127.0.0.1", "[::1]"} | set(extra)
 
 def setup(path, since):
     cfg = load_config()
@@ -27,7 +58,7 @@ def setup(path, since):
     units = data.units(path); trs = data.transfers(path)
     db = store.connect(os.environ.get("HOLDLINE_DB", ":memory:"))
     n = store.build(db, temps, outs, units, trs, cfg, since=since)
-    STATE.update(cfg=cfg, db=db, temps=temps, fac=data.facilities(path), cases=n,
+    STATE.update(cfg=cfg, db=db, temps=temps, fac=data.facilities(path), cases=n, since=since,
                  metrics=evaluate.run(path))
     print(f"HOLDLINE ready: {n} hold cases since {since}", flush=True)
 
@@ -36,22 +67,60 @@ def readings_around(fid, start, hours=24):
     lo, hi = s - timedelta(hours=hours), s + timedelta(hours=hours)
     return [(t.strftime("%Y-%m-%d %H:%M"), v) for t, v in STATE["temps"].get(fid, []) if lo <= t <= hi]
 
+CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; "
+       "connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
+
 class H(SimpleHTTPRequestHandler):
+    server_version = "HOLDLINE"; sys_version = ""
     def __init__(self, *a, **k):
         super().__init__(*a, directory=STATIC, **k)
+    def send_error(self, code, message=None, explain=None):
+        # Unknown pages get the branded 404 (honest state, no fake confirmation).
+        # API errors never reach here: they return JSON via _json.
+        if code == 404:
+            try:
+                b = open(os.path.join(STATIC, "404.html"), "rb").read()
+            except OSError:
+                return super().send_error(code, message, explain)
+            self.send_response(code); self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+            return
+        return super().send_error(code, message, explain)
     def log_message(self, *a):
         pass
-    def _json(self, obj, code=200):
+    def end_headers(self):
+        for k, v in (("Content-Security-Policy", CSP), ("X-Content-Type-Options", "nosniff"), ("X-Frame-Options", "DENY"),
+                     ("Referrer-Policy", "no-referrer"), ("Cross-Origin-Resource-Policy", "same-origin")):
+            self.send_header(k, v)
+        super().end_headers()
+    def _json(self, obj, code=200, extra=None):
         b = json.dumps(obj, default=str).encode()
-        self.send_response(code); self.send_header("Content-Type", "application/json")
+        self.send_response(code); self.send_header("Content-Type", "application/json"); self.send_header("Cache-Control", "no-store")
+        for k, v in (extra or {}).items(): self.send_header(k, str(v))
         self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
+    def _host_ok(self):
+        """Refuse requests whose Host is not this machine (DNS rebinding), and cross-site POSTs."""
+        raw = (self.headers.get("Host") or "").lower()
+        host = raw if raw.endswith("]") else raw.rsplit(":", 1)[0]  # strip the port, keep an [::1] literal
+        if host not in allowed_hosts():
+            self._json({"error": "host not allowed"}, 403); return False
+        org = self.headers.get("Origin")
+        if org and self.command == "POST" and urlparse(org).netloc.lower() != (self.headers.get("Host") or "").lower():
+            self._json({"error": "cross-site request refused"}, 403); return False
+        return True
+    def _session(self):
+        return auth.session_user(self.headers.get("X-Holdline-Token", ""))
     def do_GET(self):
+        if not self._host_ok(): return
         u = urlparse(self.path); q = parse_qs(u.query); db = STATE["db"]
+        if AUTH_READS and u.path.startswith(SENSITIVE_READS) and not self._session():
+            return self._json({"error": "sign in first"}, 401)
         if u.path == "/api/summary":
             r = {s: n for s, n in db.execute("SELECT status, COUNT(*) FROM cases GROUP BY status")}
-            held = db.execute("SELECT COUNT(*) FROM case_units cu JOIN cases c ON c.id=cu.case_id WHERE c.status='OPEN'").fetchone()[0]
+            held = db.execute("SELECT COUNT(DISTINCT cu.unit_id) FROM case_units cu JOIN cases c ON c.id=cu.case_id WHERE c.status='OPEN'").fetchone()[0]
             ok, bad = store.verify_chain(db)
-            return self._json(dict(cases=r, units_on_hold=held, audit_ok=ok, audit_broken_at=bad, metrics=STATE["metrics"]))
+            return self._json(dict(cases=r, units_on_hold=held, dataset_since=str(STATE.get("since", "")), dataset="official synthetic",
+                                   audit_ok=ok, audit_broken_at=bad, metrics=STATE["metrics"]))
         if u.path == "/api/cases":
             st = q.get("status", ["OPEN"])[0]
             rows = db.execute("""SELECT c.*, COUNT(cu.unit_id) n FROM cases c LEFT JOIN case_units cu ON cu.case_id=c.id
@@ -70,35 +139,57 @@ class H(SimpleHTTPRequestHandler):
         if u.path == "/api/audit":
             return self._json([dict(r) for r in db.execute("SELECT * FROM audit ORDER BY seq DESC LIMIT 100")])
         if u.path == "/api/me":
-            name = SESSIONS.get(self.headers.get("X-Holdline-Token", ""))
+            name = self._session()
             return self._json({"user": name, "role": users()[name]["role"]} if name else {"user": None})
         if u.path == "/api/users":
             return self._json([{"user": k, "name": v["name"], "role": v["role"]} for k, v in users().items()])
         if u.path == "/healthz":
             return self._json({"ok": True})
+        if u.path.startswith("/api/"):
+            return self._json({"error": "not found"}, 404)
         return super().do_GET()
     def do_POST(self):
+        if not self._host_ok(): return
         u = urlparse(self.path)
+        if not (self.headers.get("Content-Type") or "").lower().startswith("application/json"):
+            return self._json({"error": "JSON only"}, 415)
         try:
-            body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+            n = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            return self._json({"error": "bad length"}, 400)
+        if n < 0 or n > MAX_BODY:
+            self.close_connection = True
+            return self._json({"error": "request too large"}, 413)
+        try:
+            body = json.loads(self.rfile.read(n) or b"{}")
+            if not isinstance(body, dict): raise ValueError
         except ValueError:
             return self._json({"error": "bad JSON"}, 400)
         if u.path == "/api/login":
-            usr = check_pin(body.get("user"), body.get("pin"))
+            try:
+                usr = check_pin(body.get("user"), body.get("pin"))
+            except Locked as e:
+                return self._json({"error": f"Too many wrong tries. Try again in {e.wait} s."}, 429, {"Retry-After": e.wait})
             if not usr:
                 return self._json({"error": "wrong user or PIN"}, 401)
-            tok = secrets.token_urlsafe(24); SESSIONS[tok] = body["user"]
-            return self._json({"token": tok, "user": body["user"], "role": usr["role"]})
+            return self._json({"token": auth.new_session(body["user"]), "user": body["user"], "role": usr["role"]})
+        if u.path == "/api/logout":
+            auth.end_session(self.headers.get("X-Holdline-Token", ""))
+            return self._json({"ok": True})
         if u.path != "/api/decide":
             return self._json({"error": "not found"}, 404)
         # Identity comes from the server session, never from the request body.
-        actor = SESSIONS.get(self.headers.get("X-Holdline-Token", ""))
+        actor = self._session()
         if not actor:
             return self._json({"error": "sign in first"}, 401)
         role = users()[actor]["role"]
         second = None
         if body.get("second_signer"):
-            if not check_pin(body.get("second_signer"), body.get("second_pin")):
+            try:
+                ok2 = check_pin(body.get("second_signer"), body.get("second_pin"))
+            except Locked as e:
+                return self._json({"error": f"Second signer locked for {e.wait} s after wrong PINs."}, 429, {"Retry-After": e.wait})
+            if not ok2:
                 return self._json({"error": "second signer PIN not verified"}, 403)
             if users()[body["second_signer"]]["role"] != "qualified_releaser":
                 return self._json({"error": "second signer must also be a qualified releaser"}, 403)
@@ -110,6 +201,8 @@ class H(SimpleHTTPRequestHandler):
             return self._json(r)
         except PermissionError as e:
             return self._json({"error": str(e)}, 403)
+        except store.KeyMismatch as e:
+            return self._json({"error": str(e)}, 422)
         except (ValueError, KeyError) as e:
             return self._json({"error": str(e)}, 400)
 
@@ -119,6 +212,8 @@ def main():
     port = int(a[a.index("--port") + 1]) if "--port" in a else int(os.environ.get("PORT", 8080))
     since = date.fromisoformat(a[a.index("--since") + 1]) if "--since" in a else date(2026, 10, 1)
     host = os.environ.get("HOLDLINE_HOST", "127.0.0.1")  # local only by default
+    if not loopback(host) and users_file() == DEMO_USERS:
+        sys.exit("Refusing to listen on a network address with the public demo PINs. Set HOLDLINE_USERS to a file outside the repo.")
     setup(path, since)
     print(f"Serving on http://{host}:{port} (demo log-in only, not real authentication)", flush=True)
     ThreadingHTTPServer((host, port), H).serve_forever()

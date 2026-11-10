@@ -116,6 +116,48 @@ class Residency(unittest.TestCase):
         self.assertEqual(exposure.residency(u, t)["U"][1][:2], ("H", date(2026, 10, 3)))
 
 DATA = os.environ.get("HOLDLINE_DATA")
+
+def _u(uid, expiry, fac="H", status_date="2026-10-31"):
+    return dict(unit_id=uid, collection_date="2026-09-20", status_date=status_date,
+                processed_at_id=fac, component="RBC", blood_group="O+", expiry_date=expiry)
+
+class MultiDayEventCoverage(unittest.TestCase):
+    """store.build must hold units resident on ANY day of a multi-day event, not only the
+    start day, while keeping the per-day expiry filter and holding each unit once."""
+    def _build(self, units, transfers, ev_hours=(22, 30)):
+        db = store.connect()
+        # hot run from T0+22h for 30h -> EXCURSION spanning 2026-10-01 22:00 .. 2026-10-03 04:00
+        temps = {"H": series([4] * 22 + [8.5] * 30 + [4] * 6)}
+        n = store.build(db, temps, {}, units, transfers, CFG)
+        rows = db.execute("SELECT unit_id FROM case_units ORDER BY unit_id").fetchall()
+        return n, [r[0] for r in rows]
+    def test_later_day_arrival_is_held(self):
+        # U-LATE sits at C until dispatched 10-02, received at H 10-02: resident at H only on
+        # days 2-3 of the 3-day event. The old start-day-only lookup missed it.
+        units = [_u("U-LATE", "2026-11-30", fac="C")]
+        trs = [dict(unit_id="U-LATE", dispatched_at="2026-10-02 08:00:00",
+                    received_at="2026-10-02 12:00:00", to_facility_id="H")]
+        n, held = self._build(units, trs)
+        self.assertEqual(n, 1); self.assertEqual(held, ["U-LATE"])
+    def test_expired_before_window_still_excluded(self):
+        units = [_u("U-OLD", "2026-09-30")]  # expired before every event day
+        n, held = self._build(units, [])
+        self.assertEqual(n, 1); self.assertEqual(held, [])
+    def test_expiring_mid_window_held_once(self):
+        # Resident the whole window, expiry 2026-10-02: valid on days 1-2, expired by day 3.
+        # Held once (first valid day), never duplicated.
+        units = [_u("U-MID", "2026-10-02")]
+        n, held = self._build(units, [])
+        self.assertEqual(held, ["U-MID"])
+        dup = store.connect()
+        n2 = store.build(dup, {"H": series([4] * 22 + [8.5] * 30 + [4] * 6)}, {}, units + [_u("U-MID2", "2026-11-30")], [], CFG)
+        self.assertEqual([r[0] for r in dup.execute("SELECT unit_id FROM case_units ORDER BY unit_id")], ["U-MID", "U-MID2"])
+    def test_start_day_resident_still_held(self):
+        # Regression guard: a plain start-day resident must still be held exactly once.
+        units = [_u("U-A", "2026-11-30")]
+        n, held = self._build(units, [])
+        self.assertEqual(n, 1); self.assertEqual(held, ["U-A"])
+
 @unittest.skipUnless(DATA, "set HOLDLINE_DATA to the starter dataset folder to run the end-to-end check")
 class EndToEnd(unittest.TestCase):
     def test_metrics_reproduce(self):
@@ -127,3 +169,17 @@ class EndToEnd(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class NoUnitEvents(unittest.TestCase):
+    def test_event_with_no_units_is_logged_not_queued(self):
+        db = store.connect()
+        temps = {"H": series([4] * 10 + [8.5] * 4 + [4] * 10)}
+        store.build(db, temps, {}, [], [], CFG)
+        rows = db.execute("SELECT status FROM cases").fetchall()
+        self.assertEqual([r[0] for r in rows], ["NO_UNITS"])
+        acts = [r[0] for r in db.execute("SELECT action FROM audit")]
+        self.assertEqual(acts, ["EVENT_LOGGED_NO_UNITS"])
+        self.assertEqual(db.execute("SELECT COUNT(*) FROM sms_outbox").fetchone()[0], 0)
+        with self.assertRaises(Exception):
+            store.decide(db, db.execute("SELECT id FROM cases").fetchone()[0], "ACCEPT", "m", "qualified_releaser", "x", cfg=CFG)
+        self.assertTrue(store.verify_chain(db)[0])

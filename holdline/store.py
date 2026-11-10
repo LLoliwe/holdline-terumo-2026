@@ -1,5 +1,5 @@
 """Case store, decisions and an append-only, hash-chained audit log (SQLite)."""
-import sqlite3, json, hashlib, uuid
+import sqlite3, json, hashlib, uuid, re
 from datetime import datetime, timedelta, date
 from . import detect, exposure, sms
 
@@ -56,10 +56,16 @@ def open_case(db, ev, units_in_fridge, cfg):
     if db.execute("SELECT 1 FROM cases WHERE id=?", (cid,)).fetchone():
         return cid
     db.execute("INSERT INTO cases VALUES(?,?,?,?,?,?,?,?,?)", (cid, ev["facility_id"], ev["kind"], ev["start"].isoformat(),
-               ev["end"].isoformat(), ev["peak"], ev["reason"], "OPEN", ev["start"].isoformat()))
+               ev["end"].isoformat(), ev["peak"], ev["reason"], "OPEN" if units_in_fridge else "NO_UNITS", ev["start"].isoformat()))
     for u in units_in_fridge:
         db.execute("INSERT OR IGNORE INTO case_units VALUES(?,?,?,?,?,?)",
                    (cid, u["unit_id"], u["component"], u["blood_group"], u["expiry_date"], "ON_HOLD"))
+    if not units_in_fridge:
+        # Nothing to hold: the event is still recorded, but it does not enter the decision queue or SMS.
+        audit(db, "HOLDLINE", "system", "EVENT_LOGGED_NO_UNITS", cid,
+              f"No units recorded in this fridge during the event. Nothing held. {ev['reason']}", ts=ev["start"].strftime("%Y-%m-%dT%H:%M:%S+03:00"))
+        db.commit()
+        return cid
     audit(db, "HOLDLINE", "system", "HOLD_RAISED", cid,
           f"{len(units_in_fridge)} units held. {ev['reason']}", ts=ev["start"].strftime("%Y-%m-%dT%H:%M:%S+03:00"))
     peak = f"peak {ev['peak']:.1f}C" if ev["peak"] is not None else "temp unknown"
@@ -71,12 +77,35 @@ def open_case(db, ev, units_in_fridge, cfg):
     db.commit()
     return cid
 
+class KeyMismatch(ValueError):
+    """Same idempotency key, different payload (IETF idempotency-key draft: 422)."""
+
 def decide(db, case_id, decision, actor, role, reason, unit_ids=None, client_id=None, second_signer=None, cfg=None):
     """decision: ACCEPT (confirm hold: units quarantined for discard), CHANGE (release only listed units),
     REJECT (lift the hold on all units). Releasing any unit needs a reason, a qualified releaser and,
     if configured, a second signature from a different person."""
     if decision not in ("ACCEPT", "CHANGE", "REJECT"):
         raise ValueError("decision must be ACCEPT, CHANGE or REJECT")
+    if client_id is not None:
+        if not isinstance(client_id, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{1,80}", client_id):
+            raise ValueError("bad client_id")
+        # Replay of a decision that was already applied: answer first, even if the case has moved on since.
+        prior = db.execute("SELECT actor, case_id, action, detail FROM audit WHERE client_id=?", (client_id,)).fetchone()
+        if prior:
+            if prior["case_id"] == case_id and prior["actor"] == actor:
+                # Full meaning must match: action, reason, the exact set of units released, and the second signer.
+                done = {r["unit_id"]: r["state"] for r in db.execute("SELECT unit_id, state FROM case_units WHERE case_id=?", (case_id,))}
+                want = set(done) if decision == "REJECT" else {u for u in (unit_ids or []) if u in done}
+                if decision == "ACCEPT": want = set()
+                exp = f"{decision}: {(reason or '').strip()}. Released {len(want)}, quarantined {len(done) - len(want)}."
+                if second_signer: exp += f" Second signature: {second_signer}."
+                same = (prior["action"] == f"DECISION_{decision}" and prior["detail"] == exp
+                        and want == {u for u, st in done.items() if st == "RELEASED"})
+                if not same:
+                    raise KeyMismatch("client_id was already used for a different decision")
+                st = db.execute("SELECT status FROM cases WHERE id=?", (case_id,)).fetchone()
+                return dict(case_id=case_id, duplicate=True, status=st["status"] if st else None)
+            raise ValueError("client_id already used for a different decision")
     if not reason or len(reason.strip()) < 5:
         raise ValueError("a reason is required")
     c = db.execute("SELECT * FROM cases WHERE id=?", (case_id,)).fetchone()
@@ -92,8 +121,6 @@ def decide(db, case_id, decision, actor, role, reason, unit_ids=None, client_id=
             raise PermissionError("release needs a second signature from a different person")
         if decision == "CHANGE" and not unit_ids:
             raise ValueError("CHANGE needs the list of units to release")
-    if client_id and db.execute("SELECT 1 FROM audit WHERE client_id=?", (client_id,)).fetchone():
-        return dict(case_id=case_id, duplicate=True)
     all_units = [r["unit_id"] for r in db.execute("SELECT unit_id FROM case_units WHERE case_id=?", (case_id,))]
     rel = all_units if decision == "REJECT" else (unit_ids or [])
     rel = [u for u in rel if u in all_units]
@@ -129,7 +156,16 @@ def build(db, temps, outs, units, trs, cfg, since=None):
         for ev in detect.holdline_events(fac, rs, outs.get(fac, []), cfg):
             if not ev["hold"] or (since and ev["start"].date() < since):
                 continue
-            ids = [i for i in by_fac_day.get((fac, ev["start"].date()), [])
-                   if ulookup[i]["expiry_date"] >= ev["start"].date().isoformat()]
+            # Units held = resident on ANY day of the event window (start..end), not only the
+            # start day: a unit that arrives mid-event is still in that fridge while the event
+            # runs. Expiry filter is per residency day (exclude units already expired on the
+            # day they were resident in the window); a unit is held once, on its first valid day.
+            ids = []; seen = set(); d = ev["start"].date()
+            while d <= ev["end"].date():
+                for i in by_fac_day.get((fac, d), []):
+                    if i in seen or ulookup[i]["expiry_date"] < d.isoformat():
+                        continue
+                    seen.add(i); ids.append(i)
+                d += timedelta(days=1)
             open_case(db, ev, [ulookup[i] for i in ids], cfg); n += 1
     return n
