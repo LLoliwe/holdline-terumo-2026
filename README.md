@@ -9,8 +9,8 @@ A blood fridge in a Kenyan county hospital goes above 6°C during a power cut. T
 
 - **7,112 units** were exposed to a temperature excursion (the dataset's own label, `units.temp_excursion_exposed`).
 - **2,119 of them were transfused anyway.**
-- Many exposures happen while the logger is silent: during a power cut the logger stops writing but the fridge keeps warming, so the hourly log alone under-reports.
-- The simple rule "any reading above 6°C, hold that fridge" fires on every door opening and on sensor glitch codes (99.9), so staff learn to ignore it.
+- Some exposures happen while the logger is silent: during a power cut the logger can stop writing while the fridge keeps warming, so the hourly log alone can under-report.
+- The simple rule "any reading above 6°C, hold that fridge" also fires on one-hour spikes such as door openings and on sensor glitch codes (99.9): in this data 3 of every 4 of its holds are false.
 
 User (hypothesis, not interviewed): the duty officer at a hospital blood bank, plus the blood bank manager who is qualified to release units.
 
@@ -40,8 +40,8 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest -v tests.test_holdline                 # 30 tests (engine + HTTP security), no data needed
-HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline   # adds the end-to-end metrics check
+python3 -m unittest -v tests.test_holdline tests.test_server                 # 30 tests (engine + HTTP security), no data needed
+HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server   # 31: adds the end-to-end metrics check
 python3 -m holdline.evaluate data                          # reproduces the numbers below
 ```
 
@@ -50,7 +50,7 @@ Try it: sign in as demo.manager, open a case, tick one unit, write a reason, cho
 ## Architecture
 ![HOLDLINE architecture](docs/architecture.png)
 
-Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). What can fail and what happens then: [docs/FAILURE_MODES.md](docs/FAILURE_MODES.md).
 
 ```
 temperature_logs, power_outages, transfers, units (CSV)
@@ -67,9 +67,9 @@ temperature_logs, power_outages, transfers, units (CSV)
 Where it sits: beside an existing blood bank information system, between the fridge logger and the issue desk. Units are referenced by ISBT 128-style unit IDs as given in the dataset; no FHIR or DHIS2 integration is built.
 
 ## AI and data
-- **What it does**: a rule-based anomaly detector (glitch filtering, persistence, logger-gap inference from power-cut records). No machine-learning model: on this data a transparent rule beats the baseline, and a judge can read every reason.
+- **What it does**: a rule-based anomaly detector (glitch filtering, persistence, logger-gap inference from power-cut records). No machine-learning model: a transparent rule gives much higher precision than the baseline on this data, and every reason can be read.
 - **Baseline**: "any hourly reading above 6°C puts that fridge-day on hold" (raw readings, as a person scanning the chart would).
-- **Ground truth**: `units.temp_excursion_exposed` from the starter dataset. The generator sets it from the fridge's true temperature, including hours the logger did not record, and from cool box peaks above 10°C.
+- **Ground truth**: `units.temp_excursion_exposed` from the starter dataset. The generator sets it from the fridge's true simulated temperature (above 6°C for 4 consecutive hours marks the whole fridge-day), including hours the logger did not record, and from cool box peaks above 10°C. Our tracing is also day-level, which matches how the label is built; a real site would need hour-level stock movements.
 - **Result, full year (49,426 units, 7,112 exposed)**, from `docs/metrics.json`:
 
 | | Units held | Exposed caught (recall) | Precision | False holds | Exposed units held before their transfusion day (of 2,119) |
@@ -83,17 +83,17 @@ What this shows: HOLDLINE holds **18,254 fewer units by mistake** at about the s
 - Thresholds are **our chosen configuration** (`holdline/config/kenya.json`): 2 consecutive hours, a 3-hour gap, a 10°C cool box. The data dictionary only establishes the 2 to 6°C range. They were set before scoring and not tuned on the labels. No confidence probabilities are produced. HOLDLINE misses 106 more exposed units than the baseline (326 against 220) in exchange for 18,254 fewer false holds; that trade is stated, not hidden.
 - **How a user sees the reason**: each case starts with how sure it is, "Measured", "Presumed, not measured" (logger gap during a power cut) or "Unknown" (shown, not held), then states the reason in words (for example RBTC-MSA on 2025-11-24: "Measured: 23 consecutive hourly readings above 6°C, peak 22.6°C"), with the 48-hour chart.
 - **Who approves**: the duty officer can confirm a hold; only a qualified manager can release, with a second qualified signer verified by the server (demo log-in).
-- **If the detector is wrong or offline**: a hold is the safe default, so a false hold costs a staff check. If the server is unreachable the device keeps the last view and queues decisions. Missed events stay possible (326 in the year), so the manual fridge chart check is not removed.
+- **If the detector is wrong or offline**: a hold is the safe default, so a false hold costs a staff check. If the server is unreachable the device keeps the last view and queues Accept decisions; releases wait for the server. Missed events stay possible (326 in the year), so the manual fridge chart check is not removed.
 
 ## Data
 The synthetic starter dataset only: `temperature_logs.csv`, `power_outages.csv`, `units.csv`, `transfers.csv`, `facilities.csv`. We used the synthetic starter dataset. No real donor, patient or facility data. The CSVs are not committed to this repo.
 
-Data quality note: the dataset README says 60 sensor glitch readings; the file contains **55** (0.0 × 22, -99.0 × 17, 99.9 × 16). The 60 rows were sampled by the generator but our count of the published file is 55; we report 55.
+Data quality note: the dataset README says 60 sensor glitch readings; the file contains **55** (0.0 × 22, -99.0 × 17, 99.9 × 16). We report the 55 we counted.
 
 ## African conditions
 - **Power**: power cuts are an input, not an afterthought; a cut without backup turns a logger gap into a hold.
 - **Connectivity**: works offline after first load; decisions queue on the device; SMS fallback text fits one 160-character message, plain ASCII.
-- **Phones**: responsive layout, 44 px touch targets, no heavy frameworks (whole UI under 40 KB plus fonts).
+- **Phones**: responsive layout, 44 px touch targets, no frameworks (UI code about 21 KB plus fonts).
 - **New site or country**: thresholds and rules live in `holdline/config/kenya.json`; a new country is a new config file.
 - **Languages**: English only for now.
 
