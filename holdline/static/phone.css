@@ -39,3 +39,13 @@
  .decidebar{display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:10px;margin:12px 0 0;width:100%;padding:14px 16px;border:0;border-radius:10px;background:var(--ink);color:#fff;font:600 15px var(--sans);box-shadow:0 10px 26px rgba(17,17,22,.25);z-index:5;grid-column:1/-1;order:99}
  .decidebar span{font:12px var(--mono);color:#C9CED3}
 }
+/* Phone first view: with no hold open, the landing overview comes first and the queue follows below it,
+   in one scroll. Decide bar clears content: bottom padding = bar (about 52 px) + 56 px + the safe-area inset. */
+@media (max-width:760px){
+ body[data-layout=page]:not([data-view=case]) main{display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+ body[data-layout=page]:not([data-view=case]) .case:has(.overview){display:block;order:-1;flex:none;overflow:visible;height:auto;border:0}
+ body[data-layout=page]:not([data-view=case]) .queue{flex:none;min-height:0;overflow:visible;border-top:1px solid var(--rule)}
+ body[data-layout=page]:not([data-view=case]) .list{overflow:visible;flex:none}
+ html body .sheet{padding-bottom:calc(52px + 56px + env(safe-area-inset-bottom))}
+ .decidebar{bottom:calc(10px + env(safe-area-inset-bottom))}
+}

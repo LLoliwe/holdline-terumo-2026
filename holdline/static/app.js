@@ -191,9 +191,10 @@ function route() {
   if (h === "#/evaluation") { setView("evaluation"); return; }
   if (m) { setView("case"); openCase(decodeURIComponent(m[1])); return; }
   setView("queue"); paintOverview();
-  if (layout() !== "split") { const r = $("#list .row.sel") || $("#list .row.hi"); (r || $("#list")).focus && $("#list").focus(); }
+  if (layout() !== "split") { const r = $("#list .row.sel") || $("#list .row.hi"); (r || $("#list")).focus && $("#list").focus({preventScroll: !state.sel}); }
 }
 function setView(v) {
+  if (v !== "queue") state.ovTop = false;
   state.view = v; document.body.dataset.view = v;
   $("#evaluation").hidden = v !== "evaluation";
   document.querySelectorAll(".views a").forEach(a => a.toggleAttribute("aria-current", a.dataset.view === (v === "evaluation" ? "evaluation" : "queue")));
@@ -204,6 +205,8 @@ narrow.addEventListener("change", route);
 
 // First view: what needs attention, before any case is picked.
 function paintOverview() {
+  // Phone: the overview is the first view, so start the shared scroll at the top (once per arrival on the queue).
+  if (layout() !== "split" && state.view === "queue" && !state.ovTop) { state.ovTop = true; requestAnimationFrame(() => { const m = $("main"); if (m) m.scrollTop = 0; }); }
   const el = $("#case"), rows = state.status === "OPEN" ? state.rows : [], s = state.summary;
   state.sel = null; state.data = null; caseSeq++; markRows();
   // Seam: an overview module (overview.js) may define window.HoldlineOverview.render(mount, ctx) to own the landing view.
