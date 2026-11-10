@@ -123,6 +123,9 @@ def decide(db, case_id, decision, actor, role, reason, unit_ids=None, client_id=
             raise ValueError("CHANGE needs the list of units to release")
     all_units = [r["unit_id"] for r in db.execute("SELECT unit_id FROM case_units WHERE case_id=?", (case_id,))]
     rel = all_units if decision == "REJECT" else (unit_ids or [])
+    foreign = sorted({u for u in rel if u not in all_units})
+    if decision == "CHANGE" and foreign:
+        raise ValueError(f"CHANGE lists {len(foreign)} unit(s) not in this case ({', '.join(foreign[:5])}); nothing written")
     rel = [u for u in rel if u in all_units]
     for u in all_units:
         db.execute("UPDATE case_units SET state=? WHERE case_id=? AND unit_id=?",
@@ -135,6 +138,22 @@ def decide(db, case_id, decision, actor, role, reason, unit_ids=None, client_id=
     audit(db, actor, role, f"DECISION_{decision}", case_id, detail, client_id=client_id)
     db.commit()
     return dict(case_id=case_id, status=status, released=rel)
+
+def cross_holds(db, case_id):
+    """Units in this case that other cases still block: unit_id -> [{case_id, status, state}].
+    A unit stays blocked wherever its state is not RELEASED (ON_HOLD in an open case,
+    QUARANTINED in a decided one), regardless of the other case's own status. The warning
+    clears only when every other case holding the unit has released it."""
+    rows = db.execute("""
+        SELECT cu.unit_id, cu.case_id, c.status, cu.state FROM case_units cu
+        JOIN cases c ON c.id = cu.case_id
+        WHERE cu.case_id != ? AND cu.state != 'RELEASED'
+          AND cu.unit_id IN (SELECT unit_id FROM case_units WHERE case_id = ?)
+        ORDER BY cu.unit_id, cu.case_id""", (case_id, case_id)).fetchall()
+    out = {}
+    for r in rows:
+        out.setdefault(r["unit_id"], []).append(dict(case_id=r["case_id"], status=r["status"], state=r["state"]))
+    return out
 
 def build(db, temps, outs, units, trs, cfg, since=None):
     """Open a case for every holding event (optionally only events on/after `since`)."""

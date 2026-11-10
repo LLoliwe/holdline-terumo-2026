@@ -170,3 +170,6 @@ aside{background:linear-gradient(180deg,rgba(255,255,255,.52),rgba(255,255,255,.
 #login select,#login input{font:500 12px var(--mono);background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:7px 8px;min-height:36px}
 #login select option{color:#111116}
 #login{display:flex;gap:6px;align-items:center}
+.dec .xwarn{margin:10px 0 0;padding:8px 10px;border-left:3px solid var(--excursion,#C4000D);background:#FDF1F0;font-size:12px;line-height:1.5;color:#4A1015}
+.dec .xwarn b{text-transform:uppercase;letter-spacing:.05em;font-size:11px;color:#8A0E18}
+.alsochip{display:inline-block;font:600 10px var(--mono);letter-spacing:.04em;color:#8A94A0;margin-top:2px}

@@ -133,6 +133,7 @@ class H(SimpleHTTPRequestHandler):
             f = STATE["fac"].get(c["facility_id"], {})
             return self._json(dict(case=dict(c), facility=f,
                 units=[dict(r) for r in db.execute("SELECT * FROM case_units WHERE case_id=?", (cid,))],
+                also_held=store.cross_holds(db, cid),
                 readings=readings_around(c["facility_id"], c["start"]),
                 audit=[dict(r) for r in db.execute("SELECT * FROM audit WHERE case_id=? ORDER BY seq", (cid,))],
                 sms=[dict(r) for r in db.execute("SELECT * FROM sms_outbox WHERE case_id=?", (cid,))]))

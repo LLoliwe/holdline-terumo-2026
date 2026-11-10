@@ -21,5 +21,7 @@ Scope: the prototype as built, running locally on synthetic data. "Tested" names
 | 15 | Demo PINs leak | They're public in the repo by design | None: synthetic demo users only | Replace with the site's identity system before any real use | |
 | 16 | Fridge excursion with no units in it | Event's residency list is empty | Logged as "No units" in the audit trail; no SMS, no decision | none needed | test_event_with_no_units_is_logged_not_queued |
 | 17 | Unit arrives mid-event | Residency checked on every day of the event | Unit held once, on its first valid day | Person decides | MultiDayEventCoverage tests |
+| 18 | Release request lists a unit from another case | Server checks every listed unit belongs to the case | Whole request refused, nothing written | Person corrects the list | test_change_with_unit_not_in_case_writes_nothing |
+| 19 | Same unit held by two events (released in one, still held in the other) | Server lists other cases where the unit is not released | Warning on the case and per unit; release here does not clear the other hold | Person resolves each case | test_cross_case_hold_reported_until_released_everywhere |
 
 Limits stated plainly: demo log-in is not real authentication; SMS is simulated; data is synthetic; day-level residency; no manual "open a hold" button yet.

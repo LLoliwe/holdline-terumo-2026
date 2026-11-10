@@ -21,7 +21,7 @@ A working web app plus a tested Python engine:
 2. **Logger-gap detector**: a silence of 3+ hours that overlaps a power cut without backup, or that ends above 6°C, becomes a *presumed* excursion. Other gaps are shown as *unverified* (no hold).
 3. **Cool box check**: any transfer whose cool box went above 10°C holds that unit. On this dataset it fires **zero times**: no transfer records a cool box above 10°C.
 4. **Auto-hold queue**: each event becomes a case listing every unit that was in that fridge on any day of the event. An event at a fridge with no units recorded is logged in the audit trail under "No units" and kept out of the decision queue.
-5. **Person-in-control decision**: Accept (keep all quarantined), Change (release only ticked units) or Reject (lift the hold). Reason always required. Only a qualified manager can release, and every release needs a second qualified person whose PIN the server checks. Identity comes from the server session, never from what the browser sends. Demo sessions expire (30 minutes idle, 8 hours at most), wrong PINs lock the user out for a while, and the server refuses cross-site, non-JSON and oversized requests. HOLDLINE never releases anything itself.
+5. **Person-in-control decision**: Accept (keep all quarantined), Change (release only ticked units) or Reject (lift the hold). Reason always required. A Change that lists a unit not in the case is refused and nothing is written. If a unit in the case is also held by another case, the case shows a cross-case warning: releasing it here does not clear the other hold. Only a qualified manager can release, and every release needs a second qualified person whose PIN the server checks. Identity comes from the server session, never from what the browser sends. Demo sessions expire (30 minutes idle, 8 hours at most), wrong PINs lock the user out for a while, and the server refuses cross-site, non-JSON and oversized requests. HOLDLINE never releases anything itself.
 6. **Append-only, hash-chained audit log** in SQLite: database triggers block UPDATE/DELETE, and a SHA-256 chain exposes any edit made around the triggers. Shown live in the header.
 7. **SMS fallback (simulated, nothing is sent)**: a 160-character-or-less alert per hold for sites with no data.
 8. **Offline-tolerant UI**: app shell cached by a service worker, last data and the 20 newest open cases cached on the device, a decision to keep units on hold (Accept) made offline is queued and replayed with an idempotency key, so a retry is never applied twice. Releases can't be queued offline, because the server must check both signatures. Units stay on hold until then.
@@ -40,8 +40,8 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening                 # 59 tests (engine, HTTP, security hardening), no data needed
-HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening   # 60: adds the end-to-end metrics check
+python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening                 # 61 tests (engine, HTTP, security hardening), no data needed
+HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening   # 62: adds the end-to-end metrics check
 python3 -m holdline.evaluate data                          # reproduces the numbers below
 ```
 

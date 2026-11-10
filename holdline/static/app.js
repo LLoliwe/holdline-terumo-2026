@@ -147,6 +147,9 @@ async function detail() {
   const q = Q().filter(d => d.case_id === c.id), pending = q.filter(d => !d._error).length, failed = q.filter(d => d._error);
   const [cls, glyph, label] = KIND(c);
   const lastDecision = r.data.audit.filter(a => String(a.action).startsWith("DECISION")).slice(-1)[0];
+  const also = r.data.also_held || {}, alsoUnits = Object.keys(also);
+  const alsoCases = [...new Set(alsoUnits.flatMap(u => also[u].map(x => x.case_id)))];
+  const xwarn = alsoUnits.length ? `<p class="xwarn"><b>Cross-case hold:</b> ${alsoUnits.length} of ${r.data.units.length} unit${alsoUnits.length > 1 ? "s" : ""} here ${alsoUnits.length > 1 ? "are" : "is"} also ON_HOLD or QUARANTINED in ${alsoCases.length} other case${alsoCases.length > 1 ? "s" : ""} (marked per unit below). Releasing here does not clear those holds. This prototype does not determine whether a unit may be issued.</p>` : "";
   el.innerHTML = `<div class="sheet">
   <div class="masthead">
    <div class="kicker ${open ? "" : "resolved"}">${open ? "On hold · do not issue" : c.status === "NO_UNITS" ? "Logged · no units in this fridge, nothing held" : esc(c.status) + " · decided"}</div>
@@ -157,6 +160,7 @@ async function detail() {
   <div class="decrail"><div class="dec">
    ${open ? `<span class="cap">Decision</span><h3>HOLDLINE only holds. A person decides.</h3>
    <p><b style="color:#fff">Accept</b> keeps every unit quarantined for discard. <b style="color:#fff">Change</b> releases only the ticked units. <b style="color:#fff">Reject</b> lifts the hold on all units. Any release needs the qualified manager and a second signature. HOLDLINE never releases anything itself.</p>
+   ${xwarn}
    <p class="selcount" id="relcount">0 of ${r.data.units.length} ticked for release</p>
    <textarea id="reason" rows="2" placeholder="Reason (required), e.g. units moved to backup fridge at 12:40, probe check 4.1&deg;C"></textarea>
    <div class="row"><select id="second" aria-label="Second signer"><option value="">Second signer (required to release)</option><option value="demo.manager">demo.manager</option><option value="demo.manager2">demo.manager2</option></select><input id="spin" type="password" inputmode="numeric" placeholder="Second signer PIN" aria-label="Second signer PIN"></div>
@@ -171,7 +175,7 @@ async function detail() {
    <p class="note">Green band is 2 to 6&deg;C. Breaks in the line are hours with no reading. Red points are above 6&deg;C.</p></div>
   <div class="panel units"><h3><span>Units in this fridge that day</span><span>${r.data.units.length}</span></h3>
    <div class="twrap"><table><thead><tr><th>${open ? "Release?" : ""}</th><th>Unit</th><th>Component</th><th>Group</th><th>Expiry</th><th>State</th></tr></thead><tbody>
-   ${r.data.units.map(x => `<tr><td>${open ? `<input type="checkbox" class="rel" value="${esc(x.unit_id)}" aria-label="Release ${esc(x.unit_id)}">` : ""}</td><td class="mono">${esc(x.unit_id)}</td><td>${esc(x.component)}</td><td class="mono">${esc(x.blood_group)}</td><td class="mono">${esc(x.expiry)}</td><td><span class="chip ${x.state === "RELEASED" ? "ok" : "ho"}">${esc(x.state.replace("_", " "))}</span></td></tr>`).join("")}
+   ${r.data.units.map(x => `<tr><td>${open ? `<input type="checkbox" class="rel" value="${esc(x.unit_id)}" aria-label="Release ${esc(x.unit_id)}">` : ""}</td><td class="mono">${esc(x.unit_id)}${also[x.unit_id] ? `<br><span class="alsochip">also held: ${also[x.unit_id].map(y => esc(y.case_id)).join(", ")}</span>` : ""}</td><td>${esc(x.component)}</td><td class="mono">${esc(x.blood_group)}</td><td class="mono">${esc(x.expiry)}</td><td><span class="chip ${x.state === "RELEASED" ? "ok" : "ho"}">${esc(x.state.replace("_", " "))}</span></td></tr>`).join("")}
    </tbody></table></div></div>
   <div class="panel smspanel"><h3><span>SMS fallback</span><span>simulated &middot; nothing is sent</span></h3>
    ${r.data.sms.map(s => `<div class="sms">${esc(s.body)}</div><div class="smsmeta">${s.body.length} of 160 characters &middot; for sites with no data connection</div>`).join("") || `<p class="note">No alert for this case.</p>`}</div>

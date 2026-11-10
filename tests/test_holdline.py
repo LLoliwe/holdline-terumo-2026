@@ -183,3 +183,24 @@ class NoUnitEvents(unittest.TestCase):
         with self.assertRaises(Exception):
             store.decide(db, db.execute("SELECT id FROM cases").fetchone()[0], "ACCEPT", "m", "qualified_releaser", "x", cfg=CFG)
         self.assertTrue(store.verify_chain(db)[0])
+
+class NonMemberAndCrossCase(unittest.TestCase):
+    def setUp(self):
+        self.db = store.connect(); self.cid = mkcase(self.db)
+    def test_change_with_unit_not_in_case_writes_nothing(self):
+        n_audit = self.db.execute("SELECT COUNT(*) FROM audit").fetchone()[0]
+        with self.assertRaises(ValueError):
+            store.decide(self.db, self.cid, "CHANGE", "m", "qualified_releaser", "mixed list",
+                         unit_ids=["U0", "NOT-HERE"], second_signer="s", cfg=CFG)
+        self.assertEqual(self.db.execute("SELECT status FROM cases WHERE id=?", (self.cid,)).fetchone()[0], "OPEN")
+        self.assertEqual(set(r[0] for r in self.db.execute("SELECT state FROM case_units")), {"ON_HOLD"})
+        self.assertEqual(self.db.execute("SELECT COUNT(*) FROM audit").fetchone()[0], n_audit)
+    def test_cross_case_hold_reported_until_released_everywhere(self):
+        ev2 = dict(facility_id="HSP-1", kind="EXCURSION", start=T0 + timedelta(hours=10), end=T0 + timedelta(hours=13), peak=8.0, reason="second", hold=True)
+        cid2 = store.open_case(self.db, ev2, [dict(unit_id="U0", component="RBC", blood_group="O+", expiry_date="2026-11-30")], CFG)
+        self.assertEqual(list(store.cross_holds(self.db, self.cid)), ["U0"])
+        store.decide(self.db, self.cid, "CHANGE", "m", "qualified_releaser", "U0 fine", unit_ids=["U0"], second_signer="s", cfg=CFG)
+        self.assertEqual(list(store.cross_holds(self.db, self.cid)), ["U0"])  # still ON_HOLD in case 2
+        store.decide(self.db, cid2, "REJECT", "m", "qualified_releaser", "probe fine", second_signer="s", cfg=CFG)
+        self.assertEqual(store.cross_holds(self.db, self.cid), {})
+        self.assertEqual(store.cross_holds(self.db, cid2), {})
