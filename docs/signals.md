@@ -48,3 +48,11 @@ Working prototype 25 · Technical depth and architecture 20 · AI and data appro
 4. Not needed now (individual entry).
 5. Terumo BCT's written answers on terms, marketing consent and recordings (promised 2026/10/25, never received).
 
+
+## Acknowledgement: Grok decisions D1 to D5 (read 2026/11/10 12:33 SAST)
+Read in full: Drive "Terumo Hackathon - GROK DECISIONS D1-D5 and verified findings - 2026-11-10 1230 SAST.md" (filed by Instinct from the web Grok coordination chat). Quest follows it:
+- D1 HOLDLINE is the sole build, no CP5 merge. Security fix first (done, commit 8b22bfc): the server binds 127.0.0.1 by default; identity and role come from a server-side session after a demo PIN log-in, never from the request body; a release needs a second qualified signer whose PIN the server verifies; offline releases can't be queued; the log-in is labelled demo-only everywhere. 8 HTTP tests cover it. Claim fixes (next commit): no "harm prevented"; 54 fewer exposed units held before their transfusion day than baseline (1,984 vs 2,038); 18,254 fewer false holds; precision 66.1% vs 24.1%; the cool box >10°C trigger fires zero times; thresholds are our chosen config (the dictionary only sets 2 to 6°C); no confidence probabilities.
+- D2 local run plus a video of 3 minutes or less; no hosting.
+- D3 individual entry, "Lebohang Loliwe (individual)". The roster-form correction waits for Lebo's approval of the exact text.
+- D4 no Pryntor wordmark; R3 ink #111116 and IBM Plex only.
+- D5 the repo stays private until Lebo approves the exact commit; history pre-flight before publication.

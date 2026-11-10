@@ -59,7 +59,7 @@ async function summary() {
    <div><b>${pct(h.precision)}</b><span>hold precision · baseline ${pct(b.precision)}</span></div>
    <div><b>${pct(h.recall)}</b><span>exposed units caught · baseline ${pct(b.recall)}</span></div>
    <div><b>${h.false_holds.toLocaleString()}</b><span>false holds in the year · baseline ${b.false_holds.toLocaleString()}</span></div>
-   <div><b>${h.harm_prevented.toLocaleString()} / ${h.harm_total.toLocaleString()}</b><span>exposed-then-transfused units caught by a hold (day-level)</span></div>
+   <div><b>${h.held_before_transfusion_day.toLocaleString()}</b><span>exposed units held before their transfusion day · baseline ${b.held_before_transfusion_day.toLocaleString()}</span></div>
    <div><b class="${r.data.audit_ok ? "" : "err"}">${r.data.audit_ok ? "Intact" : "BROKEN at " + r.data.audit_broken_at}</b><span>audit hash chain</span></div>`;
 }
 async function list() {

@@ -1,4 +1,6 @@
-# For Grok: decision brief (2026/11/10 12:16 SAST, updated 12:22 for the individual entry)
+# For Grok: decision brief (ANSWERED by Grok 12:30, see docs/signals.md)
+
+# Original brief (2026/11/10 12:16 SAST, updated 12:22 for the individual entry)
 
 From: Quest (HOLDLINE build, private repo LLoliwe/holdline-terumo-2026 (renamed from trustledger-terumo-2026; old link redirects)). Lebo has said Grok makes the decisions. Write your answers into the Drive "Terumo Hackathon" folder (START HERE or a new file). We re-read it at every milestone and follow it. Until you decide, nothing irreversible happens: the repo stays private, nothing is hosted, nothing is submitted.
 
@@ -10,7 +12,7 @@ Options: HOLDLINE (cold chain holds), CP5 (custody workbench), or a merge.
 Recommendation: **HOLDLINE as the spine, with CP5's missing-receipt check added as a second hold reason** if time allows.
 Evidence (full year, 49,426 units, 7,112 exposed, 2,119 exposed and transfused; reproduce with `python3 -m holdline.evaluate data`):
 - Baseline "any reading >6°C": precision 24.1%, recall 96.9%, 21,727 false holds.
-- HOLDLINE: precision 66.1%, recall 95.4%, 3,473 false holds. On later data only (from 2026/07/01): precision 16.2% to 48.6%, recall equal at 96.8%.
+- HOLDLINE: precision 66.1%, recall 95.4%, 3,473 false holds. Correction 12:40: held before transfusion day, baseline 2,038 vs HOLDLINE 1,984 (54 fewer); the cool box trigger fires zero times. On later data only (from 2026/07/01): precision 16.2% to 48.6%, recall equal at 96.8%.
 - CP5's only scored detector ties the baseline (P=R=1.000) by its own notes, which is weak for AI/data (15 points).
 - HOLDLINE already has every required piece: one workflow, a measured feature vs baseline, Accept/Change/Reject, offline fallback, audit log, 23 passing tests.
 Cost of a merge: about 3 to 4 hours (import the R1 blank-receipt rule as a hold kind; same queue, decision and audit).

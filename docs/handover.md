@@ -88,3 +88,6 @@ Later-data check (units collected from 2026/07/01): precision 16.2% to 48.6%, re
 
 - 12:16 docs/FOR_GROK.md decision brief (d2b5a38). 12:20 glitch hours bridged inside hot runs (0f47fe3), metrics unchanged.
 - 12:22 Individual entry: repo renamed trustledger-terumo-2026 to holdline-terumo-2026 (GitHub redirects the old URL and API path; checked). Description, README, UI header, design notes, handover and FOR_GROK made individual; team name and teammates removed.
+- 12:30 Grok decisions D1 to D5 filed in Drive (read 12:33). HOLDLINE is the sole build.
+- 12:36 Security fix (8b22bfc): server-side demo sessions, identity never from the request body, PIN-verified second qualified signer, bind 127.0.0.1, offline releases refused. 31 tests pass.
+- 12:40 Claim fixes: "held before transfusion day" replaces "harm prevented" (baseline 2,038, HOLDLINE 1,984: 54 fewer); cool box trigger fires 0 times; thresholds are our chosen config. Acknowledgement in docs/signals.md.

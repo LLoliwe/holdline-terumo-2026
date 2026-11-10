@@ -21,19 +21,21 @@ def run(path, since=None):
     base = exposure.held_units(units, spans, base_days, cfg)
     hl = exposure.held_units(units, spans, hl_days, cfg, coolbox=cool)
     truth = {u["unit_id"] for u in units if u["temp_excursion_exposed"] == "True"}
-    harm = {u["unit_id"] for u in units if u["temp_excursion_exposed"] == "True" and u["status"] == "transfused"}
+    tdate = {u["unit_id"]: u["status_date"] for u in units if u["temp_excursion_exposed"] == "True" and u["status"] == "transfused"}
     def m(held):
         h = set(held)
         tp = len(h & truth)
         return dict(held=len(h), caught=tp, missed=len(truth - h), false_holds=len(h - truth),
                     recall=round(tp / len(truth), 3) if truth else None,
                     precision=round(tp / len(h), 3) if h else None,
-                    harm_prevented=len(h & harm), harm_total=len(harm))
+                    # exposed units later transfused, whose first hold day falls strictly before the transfusion day
+                    held_before_transfusion_day=sum(1 for x in h if x in tdate and held[x].split(" on ")[-1] < tdate[x][:10] and " on " in held[x]),
+                    exposed_transfused_total=len(tdate))
     kinds = {}
     for e in events.values():
         for x in e:
             kinds[x["kind"]] = kinds.get(x["kind"], 0) + 1
-    return dict(units=len(units), exposed=len(truth), exposed_and_transfused=len(harm),
+    return dict(units=len(units), exposed=len(truth), exposed_and_transfused=len(tdate),
                 baseline=m(base), holdline=m(hl), events=kinds, seconds=round(time.time() - t0, 1),
                 since=since)
 
