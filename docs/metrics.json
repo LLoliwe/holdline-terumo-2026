@@ -1,0 +1,68 @@
+{
+  "full_year": {
+    "units": 49426,
+    "exposed": 7112,
+    "exposed_and_transfused": 2119,
+    "baseline": {
+      "held": 28619,
+      "caught": 6892,
+      "missed": 220,
+      "false_holds": 21727,
+      "recall": 0.969,
+      "precision": 0.241,
+      "harm_prevented": 2085,
+      "harm_total": 2119
+    },
+    "holdline": {
+      "held": 10259,
+      "caught": 6786,
+      "missed": 326,
+      "false_holds": 3473,
+      "recall": 0.954,
+      "precision": 0.661,
+      "harm_prevented": 2101,
+      "harm_total": 2119
+    },
+    "events": {
+      "UNVERIFIED": 328,
+      "EXCURSION": 553,
+      "GLITCH": 55,
+      "GAP_PRESUMED": 59
+    },
+    "seconds": 2.8,
+    "since": null
+  },
+  "units_collected_from_2026-07-01": {
+    "units": 16297,
+    "exposed": 1611,
+    "exposed_and_transfused": 459,
+    "baseline": {
+      "held": 9647,
+      "caught": 1559,
+      "missed": 52,
+      "false_holds": 8088,
+      "recall": 0.968,
+      "precision": 0.162,
+      "harm_prevented": 453,
+      "harm_total": 459
+    },
+    "holdline": {
+      "held": 3210,
+      "caught": 1560,
+      "missed": 51,
+      "false_holds": 1650,
+      "recall": 0.968,
+      "precision": 0.486,
+      "harm_prevented": 459,
+      "harm_total": 459
+    },
+    "events": {
+      "UNVERIFIED": 328,
+      "EXCURSION": 553,
+      "GLITCH": 55,
+      "GAP_PRESUMED": 59
+    },
+    "seconds": 2.1,
+    "since": "2026-07-01"
+  }
+}

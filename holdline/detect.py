@@ -42,7 +42,7 @@ def holdline_events(facility_id, readings, outs, cfg):
         if len(run) >= need:
             peak = max(v for _, v in run)
             ev.append(dict(facility_id=facility_id, kind="EXCURSION", start=run[0][0], end=run[-1][0], peak=peak,
-                           hold=True, reason=f"{len(run)} consecutive hourly readings above {lim:g}C, peak {peak:.1f}C"))
+                           hold=True, reason=f"{len(run)} consecutive hourly readings above {lim:g}°C, peak {peak:.1f}°C"))
     prev = None
     for t, v in valid:
         if prev is not None and t - prev[0] > H:
@@ -55,7 +55,7 @@ def holdline_events(facility_id, readings, outs, cfg):
                 if o or after_hot:
                     why = []
                     if o: why.append(f"power cut without backup {o[0]:%H:%M} to {o[1]:%H:%M}")
-                    if after_hot: why.append(f"first reading after the gap is {v:.1f}C")
+                    if after_hot: why.append(f"first reading after the gap is {v:.1f}°C")
                     ev.append(dict(facility_id=facility_id, kind="GAP_PRESUMED", start=g0, end=g1, peak=None, hold=True,
                                    reason=f"Logger silent {gap_h} h; " + "; ".join(why)))
                 else:
