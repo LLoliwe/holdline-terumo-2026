@@ -147,7 +147,9 @@ NOT TESTED
 
 ## Reproduce
 
-    HOLDLINE_DB=:memory: python3 -m holdline.server data --port 8080 --since 2025-11-01
+    HOLDLINE_DB=:memory: python3 -m holdline.server data --port 8080
+    # default window since 2026-10-01: 33 open holds, 1,260 units on hold.
+    # Stress demo (the 412-hold queue used for the perf numbers below): add --since 2025-11-01
     # open http://localhost:8080/  (add ?layout=drawer or ?layout=page to compare layouts)
 
 Captures of the six scenarios at 1440×900 and 390×844 and the raw timing runs are in `docs/ui-evidence/`. The browser checks used for the table above are in `scripts/ui-bench/` (they need `agent-browser` and a running server).

@@ -366,3 +366,6 @@ html.light thead th{background:#FFFFFF}html.light tbody tr:hover{background:#F5F
 .overview.morning .mcell.quiet{color:#8E8E93;font-weight:600}
 .overview.morning .mrowhead{width:13rem}
 .overview.morning .week thead th:first-child{width:13rem;text-align:left}
+.howto{margin:-6px 0 14px;font-size:14px;color:var(--ink-2)}
+.howto summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.howto p{margin:8px 0 0;max-width:68ch}

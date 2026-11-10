@@ -122,7 +122,7 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 ## Known limits and next steps
 - Synthetic data only; the user is a hypothesis; no clinician has reviewed the release rules.
 - Day-level residency: a unit in the fridge any part of a day counts as in it for that day of the event.
-- Two different counts: the header's "units in open holds" (9,910 on data since 2025-11-01) counts distinct units in open cases and leaves out units already expired on the day they sat in the fridge; the evaluation's 10,259 counts every unit on any flagged fridge-day of the whole year. They are different populations and are never compared.
+- Two different counts: the header's "units on hold" (1,260 in 33 open holds on the default window since 2026-10-01; 9,910 in 412 open holds on the full-history stress demo started with `--since 2025-11-01`) counts distinct units in open cases and leaves out units already expired on the day they sat in the fridge; the evaluation's 10,259 counts every unit on any flagged fridge-day of the whole year. They are different populations and are never compared.
 - Glitch hours inside a hot run are bridged (tested); metrics unchanged on this data.
 - Demo log-in only (synthetic users and PINs, in-memory sessions, no TLS): not real authentication. No live logger feed, no SMS gateway.
 - No hosted demo: hosting needs the dataset on a public server, which the starter kit does not clearly permit.
