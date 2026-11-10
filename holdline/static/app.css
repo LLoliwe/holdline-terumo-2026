@@ -127,7 +127,8 @@ details[open]>summary:before{transform:rotate(90deg)}
 table{border-collapse:collapse;width:100%;font-size:13px}
 thead th{position:sticky;top:0;background:#FAFAF7;text-align:left;font:600 11px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);padding:7px 10px;border-bottom:1px solid var(--rule);z-index:1}
 td.nw{white-space:nowrap}
-td.mono{word-break:break-all}
+td.mono{white-space:nowrap}
+.also{white-space:nowrap}
 td{padding:6px 10px;border-bottom:1px solid var(--rule-2);vertical-align:top}
 tbody tr:hover{background:#FAFAF7}
 tr.hot td{color:var(--excursion);font-weight:600}
@@ -226,3 +227,39 @@ body[data-layout=page] .queue{max-width:none}
 @media (prefers-reduced-motion:reduce){*,*:before{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 @media (forced-colors:active){.list .row.sel{outline:2px solid Highlight}.kick,.pill{border:1px solid}}
 @media (max-width:380px){#help-open{display:none}.brand b{font-size:14px}}
+
+/* first view */
+.overview{max-width:980px;padding:40px 40px 48px}
+.eyebrow{font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--excursion)}
+.overview h1{font-size:30px;line-height:1.2;letter-spacing:-.02em;margin:10px 0 12px;max-width:26ch;font-weight:600}
+.overview h1 span{font-family:var(--mono);font-weight:600}
+.overview .why{font-size:15px;max-width:64ch}
+.ocards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:28px 0 20px}
+.ocard{display:grid;gap:4px;padding:14px 16px;background:#fff;border:1px solid var(--rule);border-radius:8px;text-decoration:none;color:var(--ink);transition:border-color .12s,box-shadow .12s,transform .12s}
+.ocard:hover{border-color:var(--ink);box-shadow:0 6px 18px rgba(17,17,22,.08);transform:translateY(-1px)}
+.ocard .ok{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ocard b{font-size:15px;line-height:1.25}
+.ocard .ov{font:600 20px var(--mono)}
+.ocard .on{font-size:12px;color:var(--ink-3)}
+.ostats{display:flex;gap:28px;border-top:1px solid var(--rule);padding-top:14px}
+.ostats dt{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ostats dd{font:600 16px var(--mono)}
+.chart .ev{fill:var(--excursion);font-weight:600}
+@media (max-width:760px){.overview{padding:20px 14px}.overview h1{font-size:22px}}
+.chart .ax{font-size:11px}
+.chart .gapt{fill:var(--unverified);font-weight:600;font-size:12px;paint-order:stroke;stroke:#fff;stroke-width:4px}
+.ocard{grid-template-rows:auto 1fr auto auto}
+.ocard .ov{font-size:18px}
+@media (max-width:760px){
+ .unitsp thead{display:none}
+ .unitsp tbody tr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"sel unit st" "sel meta meta";gap:2px 10px;padding:9px 10px;border-bottom:1px solid var(--rule-2)}
+ .unitsp td{border:0;padding:0}
+ .unitsp .c-sel{grid-area:sel;padding-top:2px}
+ .unitsp .c-unit{grid-area:unit;white-space:normal}
+ .unitsp .c-st{grid-area:st}
+ .unitsp .c-comp,.unitsp .c-grp,.unitsp .c-exp{grid-row:2;font-size:12px;color:var(--ink-3)}
+ .unitsp .c-comp{grid-column:2;justify-self:start}
+ .unitsp .c-grp{grid-column:2;justify-self:center}
+ .unitsp .c-exp{grid-column:2/4;justify-self:end}
+ .chart .ax{font-size:17px}.chart .gapt{font-size:18px}
+}

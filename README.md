@@ -40,12 +40,12 @@ git clone <this repo> && cd holdline-terumo-2026
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://127.0.0.1:8080 (binds to 127.0.0.1 only; set HOLDLINE_HOST to change)
 # demo log-in: demo.officer / 1111, demo.manager / 2222, demo.manager2 / 3333
-python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 65 pass, 1 skipped without data
-HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 66 pass with data
+python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 66 pass, 1 skipped without data
+HOLDLINE_DATA=data python3 -m unittest -v tests.test_holdline tests.test_server tests.test_hardening tests.test_recovery  # 67 pass with data
 python3 -m holdline.evaluate data                          # reproduces the numbers below
 ```
 
-Try it: sign in as demo.manager, open a case, tick one unit, write a reason, choose demo.manager2 as second signer with PIN 3333, press Change. Then sign in as demo.officer, turn the network off in dev tools and Accept another case: it queues, then syncs.
+Try it: sign in as demo.manager, open a case, write a reason, open "Release units", tick one unit, choose demo.manager2 as second signer with PIN 3333, press Release, then confirm. Keys: `/` search, `j`/`k` walk the queue, `Esc` back, `?` list. Then sign in as demo.officer, turn the network off in dev tools and Accept another case: it queues, then syncs.
 
 The default decision store is `DATA_DIR/.holdline/cases-<rules-and-window-hash>.db` (the resolved path is printed at startup). Restart with the same dataset, rules and `--since` date to resume decisions. Sessions still expire on process restart: sign in again as the original decision maker to sync queued Accepts. The starter CSVs are treated as a fixed dataset; use a separate dataset directory for revised inputs. A different rule configuration or date window uses a separate database. Back up the database while the server is stopped. For a read-only data directory, set `HOLDLINE_DB` to a writable file path; its parent must already exist. `HOLDLINE_DB=:memory:` explicitly starts a disposable demo whose decisions are lost on restart. No database or CSV belongs in Git.
 

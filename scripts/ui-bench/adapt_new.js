@@ -1,0 +1,4 @@
+window.__ADAPT = {ids: {"small": "HL-HSP-007-2026102223-EXC", "smallN": 2, "big": "HL-RBTC-ELD-2026100402-EXC", "slow": "HL-HSP-024-2026102506-EXC", "small2": "HL-HSP-017-2026102409-EXC", "ten": ["HL-HSP-021-2026102018-EXC", "HL-HSP-007-2026101911-EXC", "HL-HSP-020-2026101803-EXC", "HL-HSP-026-2026101720-EXC", "HL-HSP-012-2026101608-EXC", "HL-HSP-023-2026101607-EXC", "HL-HSP-020-2026101408-EXC", "HL-HSP-002-2026101321-EXC", "HL-RBTC-ELD-2026101315-EXC", "HL-HSP-013-2026101214-GAP"]},
+ open: id => HOLDLINE.open(id),
+ shown(id, n) { const s = document.querySelector('#case .sheet'); return s && s.dataset.case === id && document.querySelectorAll('#ubody tr').length === n; },
+ current() { const s = document.querySelector('#case .sheet'); return s ? s.dataset.case : null; }};

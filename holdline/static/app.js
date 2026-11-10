@@ -117,7 +117,7 @@ async function loadList() {
   if (my !== listSeq || r.aborted) return;  // a newer status was picked while this one loaded
   state.rows = (r.data && Array.isArray(r.data)) ? r.data : [];
   state.listCached = !!r.cached; state.listMissing = !r.data;
-  paintList();
+  paintList(); if (state.view === "queue") paintOverview();
   if (!r.cached && state.status === "OPEN") idle(() => prefetch(state.rows.slice(0, 20).map(c => c.id)));
 }
 function visible() {
@@ -186,7 +186,7 @@ function route() {
   document.body.dataset.layout = layout();
   if (h === "#/evaluation") { setView("evaluation"); return; }
   if (m) { setView("case"); openCase(decodeURIComponent(m[1])); return; }
-  setView("queue");
+  setView("queue"); paintOverview();
   if (layout() !== "split") { const r = $("#list .row.sel") || $("#list .row.hi"); (r || $("#list")).focus && $("#list").focus(); }
 }
 function setView(v) {
@@ -197,6 +197,27 @@ function setView(v) {
 }
 window.addEventListener("hashchange", route);
 narrow.addEventListener("change", route);
+
+// First view: what needs attention, before any case is picked.
+function paintOverview() {
+  const el = $("#case"), rows = state.status === "OPEN" ? state.rows : [], s = state.summary;
+  state.sel = null; state.data = null; caseSeq++; markRows();
+  if (!rows.length) { el.innerHTML = `<div class="empty">Pick a hold from the queue.</div>`; return; }
+  const oldest = rows.reduce((a, c) => c.start < a.start ? c : a), biggest = rows.reduce((a, c) => c.n > a.n ? c : a);
+  const gaps = rows.filter(c => c.kind !== "EXCURSION"), hot = rows.filter(c => c.kind === "EXCURSION" && c.peak >= 10);
+  const card = (k, c, v, note) => `<a class="ocard" href="#/case/${encodeURIComponent(c.id)}"><span class="ok">${k}</span><b>${esc(c.facility_name || c.facility_id)}</b><span class="ov">${v}</span><span class="on">${note}</span></a>`;
+  el.innerHTML = `<div class="overview"><p class="eyebrow">Open holds</p>
+   <h1><span>${fmt(rows.length)}</span> holds wait for a person. <span>${fmt(s ? s.units_on_hold : 0)}</span> units cannot be issued until then.</h1>
+   <p class="why">Every hold stays on until a duty officer accepts it or two qualified releasers release units. Start with the cases below, or press <kbd>j</kbd> to walk the queue.</p>
+   <div class="ocards">
+    ${card("Oldest open", oldest, esc(ts(oldest.start)), `${fmt(oldest.n)} unit${oldest.n === 1 ? "" : "s"} held since then`)}
+    ${card("Largest", biggest, `${fmt(biggest.n)} units`, `${biggest.kind === "EXCURSION" ? "Measured" : "Presumed"} · ${esc(ts(biggest.start))}`)}
+    ${gaps.length ? card("Logger silent", gaps.reduce((a, c) => c.n > a.n ? c : a), `${fmt(gaps.length)} presumed`, "Temperature unknown in the gap; largest shown") : ""}
+    ${hot.length ? card("Hottest", hot.reduce((a, c) => c.peak > a.peak ? c : a), `${esc(hot.reduce((a, c) => c.peak > a.peak ? c : a).peak)}°C peak`, `${fmt(hot.length)} holds peaked at 10°C or more`) : ""}
+   </div>
+   <dl class="ostats"><div><dt>Measured excursions</dt><dd>${fmt(rows.length - gaps.length)}</dd></div><div><dt>Presumed (logger gap)</dt><dd>${fmt(gaps.length)}</dd></div><div><dt>Window</dt><dd>since ${esc(s ? s.dataset_since : "")}</dd></div></dl>
+  </div>`;
+}
 
 // ── case: latest request wins; superseded requests are aborted and ignored ───────────────────────
 let caseSeq = 0, caseCtl = null;
@@ -308,7 +329,7 @@ function unitsPanel(d, canRelease) {
   return `<h2 id="u-t">Units in this fridge that day <span>${fmt(n)}</span></h2>
    ${n > 12 ? `<div class="utools"><input id="ufilter" type="search" placeholder="Filter units: id, group, component" aria-label="Filter units" value="${esc(dr.ufilter)}">${canRelease ? `<button type="button" class="btn sm ghost" data-act="tickvis">Tick shown</button><button type="button" class="btn sm ghost" data-act="untick">Clear ticks</button>` : ""}</div>` : ""}
    <div class="twrap"><table><thead><tr>${canRelease ? `<th scope="col"><span class="sr">Release</span></th>` : ""}<th scope="col">Unit</th><th scope="col">Comp.</th><th scope="col">Group</th><th scope="col">Expiry</th><th scope="col">State</th></tr></thead>
-   <tbody id="ubody">${d.units.map(u => `<tr data-u="${esc(u.unit_id)}" data-s="${esc((u.unit_id + " " + u.blood_group + " " + u.component).toLowerCase())}">${canRelease ? `<td><input type="checkbox" class="rel" value="${esc(u.unit_id)}" aria-label="Release ${esc(u.unit_id)}" ${dr.ticks.has(u.unit_id) ? "checked" : ""}></td>` : ""}<td class="mono">${esc(u.unit_id)}${also[u.unit_id] ? `<br>${also[u.unit_id].map(x => `<a class="also" href="#/case/${encodeURIComponent(x.case_id)}">also held · ${esc(x.case_id.split("-").slice(-2).join("-"))}</a>`).join(" ")}` : ""}</td><td>${esc(u.component)}</td><td>${esc(u.blood_group)}</td><td class="mono nw">${esc(u.expiry || u.expiry_date || "")}</td><td><span class="st ${esc(u.state)}">${esc(u.state)}</span></td></tr>`).join("")}</tbody></table></div>`;
+   <tbody id="ubody">${d.units.map(u => `<tr data-u="${esc(u.unit_id)}" data-s="${esc((u.unit_id + " " + u.blood_group + " " + u.component).toLowerCase())}">${canRelease ? `<td class="c-sel"><input type="checkbox" class="rel" value="${esc(u.unit_id)}" aria-label="Release ${esc(u.unit_id)}" ${dr.ticks.has(u.unit_id) ? "checked" : ""}></td>` : ""}<td class="mono c-unit">${esc(u.unit_id)}${also[u.unit_id] ? `<br>${also[u.unit_id].map(x => `<a class="also" href="#/case/${encodeURIComponent(x.case_id)}">also held · ${esc(x.case_id.split("-").slice(-2).join("-"))}</a>`).join(" ")}` : ""}</td><td class="c-comp">${esc(u.component)}</td><td class="c-grp">${esc(u.blood_group)}</td><td class="mono nw c-exp">${esc(u.expiry || u.expiry_date || "")}</td><td class="c-st"><span class="st ${esc(u.state)}">${esc(u.state)}</span></td></tr>`).join("")}</tbody></table></div>`;
 }
 
 function wireCase(d) {
@@ -381,7 +402,7 @@ let chartGeom = null;
 const hm = t => { const d = new Date(t), p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:00`; };
 function chart(rs, start, end, kind) {
   if (!rs.length) return `<p class="empty">No readings in this window: the logger was silent.</p>`;
-  const W = 900, H = 260, L = 40, R = 14, T = 16, B = 30;
+  const W = 640, H = 240, L = 34, R = 10, T = 18, B = 38;
   const tt = rs.map(r => new Date(r[0].replace(" ", "T")).getTime());
   // Fixed 48 h axis around the event start, so a silent logger shows as empty, hatched time, not a shorter line.
   const st = new Date(start).getTime(), t0 = Math.min(st - 24 * 36e5, ...tt), t1 = Math.max(st + 24 * 36e5, ...tt), vs = rs.map(r => r[1]).filter(v => v > -50 && v < 60);
@@ -394,10 +415,15 @@ function chart(rs, start, end, kind) {
     prev = t; });
   let gaps = "";  // hatched columns where an hourly reading is missing
   const edges = [t0 - 36e5, ...tt, t1 + 36e5];  // include silence before the first and after the last reading
-  for (let i = 1; i < edges.length; i++) if (edges[i] - edges[i - 1] > 36e5 * 1.5) gaps += `<rect x="${x(Math.max(t0, edges[i - 1])).toFixed(1)}" y="${T}" width="${Math.max(0, x(Math.min(t1, edges[i])) - x(Math.max(t0, edges[i - 1]))).toFixed(1)}" height="${H - T - B}" fill="url(#hatch)"/>`;
+  for (let i = 1; i < edges.length; i++) if (edges[i] - edges[i - 1] > 36e5 * 1.5) {
+    const a = x(Math.max(t0, edges[i - 1])), w = Math.max(0, x(Math.min(t1, edges[i])) - a), hrs = Math.round((edges[i] - edges[i - 1]) / 36e5) - 1;
+    gaps += `<rect x="${a.toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H - T - B}" fill="url(#hatch)"/>`;
+    if (w > 90) gaps += `<text x="${(a + w / 2).toFixed(1)}" y="${(T + 22).toFixed(1)}" text-anchor="middle" class="ax gapt">no readings · ${hrs} h</text>`;
+  }
   const sx = x(new Date(start).getTime()), ex = x(new Date(end).getTime());
   let grid = "";
   for (let v = Math.ceil(lo / 2) * 2; v <= hi; v += 2) grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule-2)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" class="ax">${v}</text>`;
+  for (let t = Math.ceil(t0 / (6 * 36e5)) * 6 * 36e5; t <= t1; t += 6 * 36e5) grid += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}" stroke="var(--rule)"/><text x="${x(t)}" y="${H - B + 15}" text-anchor="middle" class="ax">${String(new Date(t).getHours()).padStart(2, "0")}:00</text>`;
   chartGeom = {tt, rs, x, y, H, T, B};
   const pk = vs.length ? Math.max(...vs) : null;
   const sum = `${rs.length} of 49 hourly readings present from ${ts(rs[0][0])} to ${ts(rs[rs.length - 1][0])}. ${vs.filter(v => v > 6).length} above 6°C${pk != null ? `, highest ${pk}°C` : ""}. Event window ${ts(start)} to ${ts(end)}.`;
@@ -409,7 +435,7 @@ function chart(rs, start, end, kind) {
    <rect x="${Math.min(sx, ex)}" y="${T}" width="${Math.max(2, Math.abs(ex - sx))}" height="${H - T - B}" fill="var(--excursion-bg)" opacity=".6"/>
    ${gaps}<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"/>${dots}
    <g id="cur" visibility="hidden"><line id="curl" y1="${T}" y2="${H - B}" stroke="var(--verified)" stroke-width="1.5"/><circle id="curc" r="4.5" fill="var(--verified)"/><text id="curt" class="ax curt" y="${T + 10}"></text></g>
-   <text x="${L}" y="${H - 8}" class="ax">${esc(hm(t0))}</text><text x="${x(st)}" y="${H - 8}" text-anchor="middle" class="ax">event start</text><text x="${W - R}" y="${H - 8}" text-anchor="end" class="ax">${esc(hm(t1))}</text></svg>
+   <text x="${L}" y="${H - 4}" class="ax">${esc(hm(t0).slice(0, 10))}</text><text x="${x(st)}" y="${T - 4}" text-anchor="middle" class="ax ev">event start ${esc(hm(st).slice(11))}</text><text x="${W - R}" y="${H - 4}" text-anchor="end" class="ax">${esc(hm(t1).slice(0, 10))}</text><text x="${L - 6}" y="${T - 4}" text-anchor="end" class="ax">°C</text></svg>
    <figcaption class="sr" id="chartsum">${esc(sum)}</figcaption><p class="curread" id="curread" aria-live="polite"></p></figure>`;
 }
 function wireChart() {
@@ -419,7 +445,7 @@ function wireChart() {
     const r = g.rs[i], X = g.x(g.tt[i]), ok = r[1] > -50 && r[1] < 60;
     $("#cur").setAttribute("visibility", "visible"); $("#curl").setAttribute("x1", X); $("#curl").setAttribute("x2", X);
     $("#curc").setAttribute("cx", X); $("#curc").setAttribute("cy", ok ? g.y(r[1]) : g.H - g.B);
-    const t = $("#curt"); t.textContent = `${r[0].slice(11)} · ${ok ? r[1] + "°C" : "invalid"}`; t.setAttribute("x", X + (X > 700 ? -8 : 8)); t.setAttribute("text-anchor", X > 700 ? "end" : "start");
+    const t = $("#curt"); t.textContent = `${r[0].slice(11)} · ${ok ? r[1] + "°C" : "invalid"}`; t.setAttribute("x", X + (X > 480 ? -8 : 8)); t.setAttribute("text-anchor", X > 480 ? "end" : "start");
     const gap = i > 0 && g.tt[i] - g.tt[i - 1] > 36e5 * 1.5 ? ` · ${Math.round((g.tt[i] - g.tt[i - 1]) / 36e5) - 1} h with no reading before this` : "";
     $("#curread").textContent = `${r[0]} · ${ok ? r[1] + "°C" : "invalid reading"}${ok && r[1] > 6 ? " · above 6°C" : ""}${gap}`;
   };
@@ -429,7 +455,7 @@ function wireChart() {
     ev.preventDefault(); show(i);
   });
   svg.addEventListener("pointermove", ev => {
-    const b = svg.getBoundingClientRect(), vx = (ev.clientX - b.left) / b.width * 900;
+    const b = svg.getBoundingClientRect(), vx = (ev.clientX - b.left) / b.width * 640;
     let best = 0, bd = 1e9; g.tt.forEach((t, i) => { const dd = Math.abs(g.x(t) - vx); if (dd < bd) { bd = dd; best = i; } }); show(best);
   });
   state.cursor = -1;
