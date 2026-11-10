@@ -100,7 +100,7 @@ Data quality note: the dataset README says 60 sensor glitch readings; the file c
 ## AI tools we used
 Built by Lebohang Loliwe, using AI coding agents (Claude via Quest, Grok, ChatGPT) under his direction.
 
-- **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, analysed the dataset, and did the UI redesign and security hardening.
+- **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, and analysed the dataset.
 - **Grok (xAI)**: project decisions (which build, demo, branding, publication timing) and review of claims.
 - **ChatGPT (OpenAI)**: earlier research and planning notes outside this repo.
 Every number in this README was produced by the code in this repo (`python3 -m holdline.evaluate`).
