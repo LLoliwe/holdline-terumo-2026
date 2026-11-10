@@ -69,9 +69,15 @@ Only behaviours were borrowed, rebuilt in plain JavaScript and CSS with no packa
 
 Rejected after the same filter: View Transitions cross-fade (slowed opens from about 20 ms to about 130 ms), WebGPU shader effects (GPU load, distraction), React component kits (Animate UI, HorizonX, Bencho, Cue: runtime or unclear licence), and small anomaly-explanation models from Hugging Face (the reasons here come from the rules themselves, so a model would add a second, less checkable explanation).
 
-## Visual style: after the Stripe Dashboard
+## Visual style: "Night shift", after Spotify, Revolut and Apple
 
-One praised reference, followed closely: Stripe's dashboard and site (navy ink #0A2540, blurple brand, cool slate text, soft layered shadows, 8 to 12 px radii, generous spacing, the multicolour mesh gradient). Rebuilt in `theme.css` (CSS only, about 4 KB); no Stripe code, logo, font or image. Safety colours (red hold, amber logger gap) are unchanged and always paired with a shape and a word. Brand text uses #533AFD (6.2:1 on white); secondary text #56657A (5.6:1 on the page). Motion: overview cards rise in once with a 50 ms stagger, cards lift on hover, all off under reduced motion. Measured after the theme: case open 11 to 22 ms, 758-unit case 20 to 22 ms, ten opens about 200 ms with no long tasks, FCP 40 to 88 ms, no reflow overflow 320 to 1920 px.
+The entrant rejected a first light theme (after the Stripe Dashboard) as dull. The shipped theme copies three publicly praised dark interfaces closely, rebuilt in `theme.css` (CSS only) with no code, logos, fonts or images from them:
+
+- **Spotify:** near-black surfaces (#000 page, #121212 and #1C1C1E cards), big rounded cards, white pill for the selected tab.
+- **Revolut:** vivid gradient cards (blue, violet) with chunky numbers on the landing view; fact strip as large rounded tiles with 34 px numerals.
+- **Apple iOS dark mode:** system colours #0A84FF, #30D158, #FF453A, #FF9F0A; translucent glass top bar, decision panel, toasts and phone decide bar (backdrop blur); spring easing on cards and buttons; type scale display 40 to 44 px with tight tracking, title 28, headline 17 semibold, body 15, caption 12; Inter variable (OFL) as the SF stand-in, tabular numerals.
+
+Safety colours keep one meaning each: red only for a hold or danger, green only for safe or released, orange only for a silent logger, always with a shape and a word. Blue and violet are brand only. Every text pair checked at 4.5:1 or better (for example white on the blue card start 6.4:1, black on the red hold badge 6.2:1, secondary grey 6.6:1 on cards). Motion is off under reduced motion.
 
 ## Legal and trust checklist (from a "things so your app doesn't get sued" reel, where relevant)
 

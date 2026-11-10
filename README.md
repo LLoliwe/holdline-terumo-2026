@@ -127,3 +127,7 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 - Demo log-in only (synthetic users and PINs, in-memory sessions, no TLS): not real authentication. No live logger feed, no SMS gateway.
 - No hosted demo: hosting needs the dataset on a public server, which the starter kit does not clearly permit.
 - Next: probe-check step in the decision, Kiswahili interface, live logger ingest.
+
+## Alternatives tested
+
+A CUSUM detector (k = 0.5, h = 1) was tried on a side branch (`ui/rethink-grok2-algo`, 8d1c4c2). On the same synthetic data it scored precision 74.2% against 66.1%, recall 94.8% against 95.4%, 1,130 fewer false holds, 45 more exposed units missed, and 1,953 against 1,984 units held before transfusion day. It was tuned on the same data it was scored on, so the gain is unproven, and it misses more exposed units. Not adopted; the shipped rule and its numbers are unchanged. Mean kinetic temperature scored worse; gap filling, bitsets and Merkle hashing gave no gain.
