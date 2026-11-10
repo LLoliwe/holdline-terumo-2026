@@ -15,7 +15,7 @@ def main(repo):
             meta, path = line.split("\t", 1)
             if BAD_PATH.search(path):
                 problems.append(f"{c[:7]} path {path}")
-            elif not path.endswith((".png", ".woff2", ".pdf")):
+            elif not path.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp", ".woff2", ".pdf")):
                 blob = meta.split()[2]
                 txt = git("cat-file", "-p", blob, cwd=repo)
                 for m in BAD_TEXT.finditer(txt):
