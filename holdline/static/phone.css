@@ -83,3 +83,4 @@
  html body .hero{gap:6px}
  html body .hpeak{justify-items:start;grid-auto-flow:column;align-items:baseline;gap:10px}
 }
+@media (max-width:760px){html body .overview.morning .mrowhead,html body .overview.morning .week thead th:first-child{width:7.5rem;min-width:7.5rem}html body .overview.morning .mrowhead b{font-size:13px}html body .overview.morning .week{min-width:560px}html body .case>.handover{margin:16px 14px 0}}

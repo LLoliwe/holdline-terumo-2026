@@ -314,7 +314,7 @@ td.c-unit{white-space:normal;min-width:200px}
 .mlegend .mdot{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .mlegend .mdot.ex{background:var(--excursion)}
 .mlegend .mdot.hot{background:var(--excursion);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
-.mlegend .mdot.gap{background:repeating-linear-gradient(45deg,var(--unverified),var(--unverified) 1px,transparent 1px,transparent 4px);border:1px solid var(--unverified)}
+.mlegend .mdot.gap{background:#FF9F0A;border:1px solid #FF9F0A}
 .mlegend .mdot.safe{background:var(--band-safe);border:1px solid var(--rule)}
 .mstrips{display:grid;gap:10px;margin:12px 0 18px}
 .mfridge{background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px 8px}
@@ -339,3 +339,30 @@ td.c-unit{white-space:normal;min-width:200px}
 html.light{--paper:#FFFFFF;--surface:#FFFFFF}
 html.light body{background:#FFFFFF}
 html.light thead th{background:#FFFFFF}html.light tbody tr:hover{background:#F5F5F7}
+/* Last-7-nights grid. Flat solids only: black, #121212, white, Apple blue #0A84FF as the one accent.
+   Red and orange are safety marks. No glass, gradient, or glow. Type is vendored Inter. */
+.overview.morning{font-family:var(--sans), "Inter", system-ui, sans-serif}
+.overview.morning h1 .num{font-family:var(--sans), "Inter", system-ui, sans-serif;font-weight:800;letter-spacing:-.03em}
+.overview.morning .mgrid{width:100%;margin:16px 0 18px;overflow-x:auto;background:#121212;border-radius:16px;padding:8px}
+.overview.morning .week{width:100%;min-width:640px;table-layout:fixed;border-collapse:separate;border-spacing:6px}
+.overview.morning .week th,.overview.morning .week td{background:transparent;border:0;padding:0;vertical-align:middle}
+.overview.morning .week thead th{color:#FFFFFF;font-weight:700;font-size:12px;line-height:1.2;font-family:var(--sans), "Inter", system-ui, sans-serif;text-align:center;padding-bottom:4px}
+.overview.morning .week thead th .wd,.overview.morning .week thead th .mo{display:block;font-weight:650}
+.overview.morning .week thead th .dn{display:block;font-size:18px;font-weight:800;letter-spacing:-.03em;color:#FFFFFF}
+.overview.morning .week thead th.latest .mo{color:#0A84FF}
+.overview.morning .mrowhead{text-align:left;min-width:9rem;padding-right:8px}
+.overview.morning .mrowhead b{display:block;font-size:15px;color:#FFFFFF}
+.overview.morning .mcell{display:grid;align-content:center;justify-items:center;gap:2px;min-height:68px;border-radius:12px;text-decoration:none;color:#FFFFFF;background:#000000}
+.overview.morning a.mcell b{font-size:22px;line-height:1;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.overview.morning .mcell .mlab{font-weight:700;font-size:10px;line-height:1.2;font-family:var(--sans), "Inter", system-ui, sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.overview.morning .mcell.quiet{color:#FFFFFF;font-weight:650;font-size:12px;line-height:1;font-family:var(--sans), "Inter", system-ui, sans-serif;background:#000000}
+.overview.morning .mcell.ex{background:#FF453A;color:#FFFFFF}
+.overview.morning .mcell.gap{background:#FF9F0A;color:#000000}
+.overview.morning .mcell.ex.gap{background:#FF453A;color:#FFFFFF;box-shadow:inset 8px 0 0 #FF9F0A}
+.overview.morning a.mcell:focus-visible{outline:2px solid #0A84FF;outline-offset:2px}
+/* Landing cards stay the theme.css flat style (solid #121212, coloured label, white numeral). */
+/* Contrast: white on #FF453A is 3.6:1, so the filled red cell uses #D70015 (5.3:1); orange keeps black text. */
+.overview.morning .mcell.ex,.overview.morning .mcell.ex.gap{background:#D70015}
+.overview.morning .mcell.quiet{color:#8E8E93;font-weight:600}
+.overview.morning .mrowhead{width:13rem}
+.overview.morning .week thead th:first-child{width:13rem;text-align:left}

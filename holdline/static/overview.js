@@ -11,6 +11,8 @@
   const fmt = n => String(Number(n) || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const ts = s => String(s || "").replace("T", " ").slice(0, 16);
   const pad = n => String(n).padStart(2, "0");
+  const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   function parseStamp(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(String(s || ""));
@@ -32,12 +34,37 @@
     const start = ymd(startDate) + " 18:00";
     return {start, end: ymd(endDate) + " 08:00", key: start};
   }
+  function shiftNight(night, days) {
+    const p = parseStamp(night && night.start);
+    if (!p) return null;
+    const startDate = addDays(p.y, p.mo, p.d, days);
+    const endDate = addDays(startDate.y, startDate.mo, startDate.d, 1);
+    const start = ymd(startDate) + " 18:00";
+    return {start, end: ymd(endDate) + " 08:00", key: start};
+  }
   function toMin(iso) {
     const p = parseStamp(iso);
     if (!p) return null;
     return Math.floor(Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi) / 60000);
   }
   function units(c) { return Number(c && c.n) || 0; }
+  function holdEnd(c) {
+    const a = toMin(c.start);
+    if (a == null) return null;
+    const b0 = toMin(c.end || c.start);
+    return b0 != null && b0 > a ? b0 : a + 60;
+  }
+  // A touch at exactly 18:00 from before does not overlap. A hold starting at 18:00 does.
+  function overlaps(c, night) {
+    const a = toMin(c.start);
+    const b = holdEnd(c);
+    const n0 = toMin(night.start), n1 = toMin(night.end);
+    if (a == null || b == null || n0 == null || n1 == null) return false;
+    return a < n1 && b > n0;
+  }
+  function largest(holds) {
+    return holds.reduce((a, c) => units(c) > units(a) || (units(c) === units(a) && ts(c.start) > ts(a.start)) ? c : a);
+  }
 
   function groupNight(rows) {
     const open = (rows || []).filter(c => c && parseStamp(c.start));
@@ -46,14 +73,8 @@
     let newest = open[0];
     for (const c of open) if (ts(c.start) > ts(newest.start)) newest = c;
     const night = nightBounds(newest.start);
-    const n0 = toMin(night.start), n1 = toMin(night.end);
     const on = [], off = [];
-    for (const c of open) {
-      const a = toMin(c.start);
-      const b0 = toMin(c.end || c.start);
-      const b = b0 != null && b0 > a ? b0 : a + 60;
-      if (a < n1 && b > n0) on.push(c); else off.push(c);
-    }
+    for (const c of open) (overlaps(c, night) ? on : off).push(c);
     const by = new Map();
     for (const c of on) {
       const id = c.facility_id || c.facility_name || "?";
@@ -63,7 +84,7 @@
     const fridges = [...by.values()].map(f => {
       f.holds.sort((a, b) => ts(a.start).localeCompare(ts(b.start)));
       f.units = f.holds.reduce((s, c) => s + units(c), 0);
-      f.primary = f.holds.reduce((a, c) => units(c) > units(a) || (units(c) === units(a) && ts(c.start) > ts(a.start)) ? c : a);
+      f.primary = largest(f.holds);
       return f;
     }).sort((a, b) => b.units - a.units || String(a.name).localeCompare(String(b.name)));
     return {
@@ -75,45 +96,68 @@
     };
   }
 
-  function kindWord(c) { return c.kind === "EXCURSION" ? "Measured" : "Logger gap"; }
-
-  function stripSVG(fridge, night, idx) {
-    const W = 640, H = 52, L = 4, R = 4, TOP = 6, BH = 20;
-    const n0 = toMin(night.start), n1 = toMin(night.end), span = Math.max(1, n1 - n0);
-    const x = t => L + (t - n0) / span * (W - L - R);
-    const id = "hlm" + idx;
-    let bands = "";
-    fridge.holds.forEach(c => {
-      const cs = toMin(c.start), ce0 = toMin(c.end || c.start);
-      if (cs == null) return;
-      const ce = ce0 != null && ce0 > cs ? ce0 : cs + 60;
-      const a = Math.max(n0, cs), b = Math.min(n1, ce);
-      if (b <= a) return;
-      const ex = c.kind === "EXCURSION";
-      const x0 = x(a), w = Math.max(2, x(b) - x(a));
-      bands += `<rect x="${x0.toFixed(1)}" y="${TOP}" width="${w.toFixed(1)}" height="${BH}" rx="2" fill="${ex ? "var(--excursion)" : "url(#" + id + "h)"}"><title>${esc(kindWord(c))} ${esc(ts(c.start))} to ${esc(ts(c.end))}</title></rect>`;
-      if (ex && w >= 14) {
-        bands += `<path d="M${(x0 + 7).toFixed(1)} ${TOP + 4}l3.2 5.5h-6.4z" fill="#fff"><title>Above 6°C</title></path>`;
-        if (w >= 22 && Number(c.peak) >= 10) {
-          const dx = x0 + w / 2;
-          bands += `<path d="M${dx.toFixed(1)} ${TOP + 4}l3.5 4.5-3.5 4.5-3.5-4.5z" fill="#fff"><title>Peak ${esc(c.peak)}°C, at or above 10°C</title></path>`;
-        }
-      }
-    });
-    const labels = [[0, "18:00", "start"], [3, "21:00", "middle"], [6, "00:00", "middle"], [9, "03:00", "middle"], [12, "06:00", "middle"], [14, "08:00", "end"]];
-    let ticks = "";
-    labels.forEach(([h, name, anchor]) => {
-      const X = x(n0 + h * 60);
-      const ta = anchor === "start" ? "start" : anchor === "end" ? "end" : "middle";
-      ticks += `<line x1="${X.toFixed(1)}" x2="${X.toFixed(1)}" y1="${TOP + BH}" y2="${TOP + BH + 4}" stroke="var(--rule)"/><text x="${X.toFixed(1)}" y="${TOP + BH + 15}" text-anchor="${ta}" class="ax">${name}</text>`;
-    });
-    return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false"><defs><pattern id="${id}h" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--unverified)" stroke-width="1.5"/></pattern></defs><rect x="${L}" y="${TOP}" width="${W - L - R}" height="${BH}" rx="2" fill="var(--band-safe)"/>${bands}${ticks}</svg>`;
+  // Seven nights ending on the newest open hold. Oldest on the left, latest on the right.
+  function groupWeek(rows) {
+    const open = (rows || []).filter(c => c && parseStamp(c.start));
+    const empty = {night: null, nights: [], fridges: [], weekUnits: 0, weekHolds: 0, otherHolds: 0, otherUnits: 0};
+    if (!open.length) return empty;
+    let newest = open[0];
+    for (const c of open) if (ts(c.start) > ts(newest.start)) newest = c;
+    const night = nightBounds(newest.start);
+    const nights = [];
+    for (let i = 6; i >= 0; i--) nights.push(shiftNight(night, -i));
+    const by = new Map();
+    const on = [], off = [];
+    for (const c of open) {
+      let hit = false;
+      nights.forEach((n, i) => {
+        if (!overlaps(c, n)) return;
+        hit = true;
+        const id = c.facility_id || c.facility_name || "?";
+        if (!by.has(id)) by.set(id, {facility_id: id, name: c.facility_name || id, county: c.facility_county || "", cells: nights.map(() => [])});
+        by.get(id).cells[i].push(c);
+      });
+      (hit ? on : off).push(c);
+    }
+    const fridges = [...by.values()].map(f => {
+      f.cells = f.cells.map(holds => {
+        holds.sort((a, b) => ts(a.start).localeCompare(ts(b.start)));
+        if (!holds.length) return {holds, primary: null, units: 0, ex: false, gap: false};
+        return {
+          holds,
+          primary: largest(holds),
+          units: holds.reduce((s, c) => s + units(c), 0),
+          ex: holds.some(c => c.kind === "EXCURSION"),
+          gap: holds.some(c => c.kind !== "EXCURSION"),
+        };
+      });
+      const once = new Map();
+      f.cells.forEach(cell => cell.holds.forEach(c => once.set(c.id, c)));
+      f.holds = [...once.values()].sort((a, b) => ts(a.start).localeCompare(ts(b.start)));
+      f.units = f.holds.reduce((s, c) => s + units(c), 0);
+      f.primary = largest(f.holds);
+      return f;
+    }).sort((a, b) => b.units - a.units || String(a.name).localeCompare(String(b.name)));
+    return {
+      night, nights, fridges,
+      weekUnits: on.reduce((s, c) => s + units(c), 0),
+      weekHolds: on.length,
+      otherHolds: off.length,
+      otherUnits: off.reduce((s, c) => s + units(c), 0),
+    };
   }
 
-  function holdLine(c) {
-    const peak = c.kind === "EXCURSION" && c.peak != null && c.peak !== "" ? ` · peak ${esc(c.peak)}°C` : "";
-    const n = units(c);
-    return `<li><a href="#/case/${encodeURIComponent(c.id)}">${kindWord(c)} · ${esc(ts(c.start))} to ${esc(ts(c.end))}${peak} · ${fmt(n)} unit${n === 1 ? "" : "s"}</a></li>`;
+  function kindWord(c) { return c.kind === "EXCURSION" ? "Measured" : "Logger gap"; }
+  function nightLabel(night) {
+    const p = parseStamp(night.start);
+    const wd = WD[new Date(Date.UTC(p.y, p.mo - 1, p.d)).getUTCDay()];
+    return {wd, day: String(p.d), mon: MO[p.mo - 1]};
+  }
+  function cellWords(cell) {
+    if (cell.ex && cell.gap) return "Measured excursion and a logger gap";
+    if (cell.ex) return "Measured excursion";
+    if (cell.gap) return "Logger gap";
+    return "Clear";
   }
 
   function cardsHtml(rows) {
@@ -129,10 +173,18 @@
 
   function headline(g) {
     const n = g.fridges.length;
-    if (!n) return `No fridge has an open hold from ${esc(g.night.start)} to ${esc(g.night.end)}.`;
+    if (!n) return `No fridge has an open hold in the last 7 nights.`;
     const noun = n === 1 ? "fridge is" : "fridges are";
-    const u = g.nightUnits;
-    return `<span>${fmt(n)}</span> ${noun} not clear from that night. <span>${fmt(u)}</span> unit${u === 1 ? "" : "s"} on those holds cannot be issued.`;
+    const u = g.weekUnits;
+    return `<b class="num">${fmt(n)}</b> ${noun} not clear across the last 7 nights. <b class="num">${fmt(u)}</b> unit${u === 1 ? "" : "s"} on those holds cannot be issued.`;
+  }
+
+  function cellHtml(cell) {
+    if (!cell.primary) return `<td><span class="mcell quiet" tabindex="-1">Clear</span></td>`;
+    const cls = [cell.ex ? "ex" : "", cell.gap ? "gap" : ""].filter(Boolean).join(" ");
+    const n = cell.units;
+    const label = cell.ex && cell.gap ? "Measured · gap" : cell.ex ? "Measured" : "Gap";
+    return `<td><a class="mcell ${cls}" href="#/case/${encodeURIComponent(cell.primary.id)}"><b>${fmt(n)}</b><span class="mlab">${label}</span><span class="sr-only">${cellWords(cell)}. Opens the largest hold.</span></a></td>`;
   }
 
   function wireMorning(mount) {
@@ -140,23 +192,23 @@
     if (!root) return;
     root.addEventListener("keydown", ev => {
       if (ev.altKey || ev.metaKey || ev.ctrlKey) return;
-      if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(ev.key)) return;
+      if (!["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"].includes(ev.key)) return;
       const tag = ev.target && ev.target.closest && ev.target.closest("input, textarea, select");
       if (tag) return;
-      const strips = [...root.querySelectorAll("a.mstrip")];
-      if (!strips.length) return;
-      let i = strips.indexOf(document.activeElement);
-      if (i < 0) {
-        const art = document.activeElement && document.activeElement.closest && document.activeElement.closest(".mfridge");
-        i = art ? strips.findIndex(a => art.contains(a)) : -1;
-      }
-      let next = i;
-      if (ev.key === "Home") next = 0;
-      else if (ev.key === "End") next = strips.length - 1;
-      else if (ev.key === "ArrowDown") next = i < 0 ? 0 : Math.min(strips.length - 1, i + 1);
-      else next = i < 0 ? strips.length - 1 : Math.max(0, i - 1);
-      if (strips[next] && strips[next] !== document.activeElement) {
-        strips[next].focus();
+      const rows = [...root.querySelectorAll("tbody tr")].map(tr => [...tr.querySelectorAll(".mcell")]);
+      if (!rows.length || !rows[0].length) return;
+      let r = -1, c = -1;
+      rows.forEach((row, ri) => row.forEach((el, ci) => { if (el === document.activeElement) { r = ri; c = ci; } }));
+      if (r < 0) { r = 0; c = ev.key === "ArrowUp" || ev.key === "End" ? rows[0].length - 1 : 0; }
+      else if (ev.key === "Home") { r = 0; c = 0; }
+      else if (ev.key === "End") { r = rows.length - 1; c = rows[r].length - 1; }
+      else if (ev.key === "ArrowRight") c = Math.min(rows[r].length - 1, c + 1);
+      else if (ev.key === "ArrowLeft") c = Math.max(0, c - 1);
+      else if (ev.key === "ArrowDown") r = Math.min(rows.length - 1, r + 1);
+      else r = Math.max(0, r - 1);
+      const next = rows[r] && rows[r][c];
+      if (next && next !== document.activeElement) {
+        next.focus();
         ev.preventDefault();
       }
     });
@@ -166,21 +218,25 @@
     const rows = (ctx && ctx.rows) || [];
     if (!mount) return;
     if (!rows.length) { mount.innerHTML = `<div class="empty">Pick a hold from the queue.</div>`; return; }
-    const g = groupNight(rows);
+    const g = groupWeek(rows);
     const s = (ctx && ctx.summary) || {};
     if (!g.night) { mount.innerHTML = `<div class="empty">Pick a hold from the queue.</div>`; return; }
-    const strips = g.fridges.map((f, i) => {
-      const ex = f.holds.some(c => c.kind === "EXCURSION");
-      const gap = f.holds.some(c => c.kind !== "EXCURSION");
-      const kind = ex && gap ? "Measured excursion and a logger gap" : ex ? "Measured excursion" : "Logger gap";
-      return `<article class="mfridge"><a class="mstrip" href="#/case/${encodeURIComponent(f.primary.id)}"><span class="mhead"><b>${esc(f.name)}</b><span class="mmeta">${f.county ? esc(f.county) + " · " : ""}${fmt(f.units)} unit${f.units === 1 ? "" : "s"} on hold</span></span>${stripSVG(f, g.night, i)}<span class="sr-only">${kind}. Opens the largest hold on this fridge.</span></a><ul class="mholds">${f.holds.map(holdLine).join("")}</ul></article>`;
+    const heads = g.nights.map((n, i) => {
+      const lab = nightLabel(n);
+      const latest = i === g.nights.length - 1;
+      return `<th scope="col"${latest ? ` class="latest"` : ""}><span class="wd">${lab.wd}</span><span class="dn">${lab.day}</span><span class="mo">${latest ? "Latest" : lab.mon}</span></th>`;
     }).join("");
-    const tableRows = g.fridges.flatMap(f => f.holds.map(c => `<tr><td>${esc(f.name)}</td><td>${kindWord(c)}</td><td class="mono">${esc(ts(c.start))}</td><td class="mono">${esc(ts(c.end))}</td><td class="mono">${c.kind === "EXCURSION" && c.peak != null && c.peak !== "" ? esc(c.peak) + "°C" : "unknown"}</td><td class="mono">${fmt(units(c))}</td><td><a href="#/case/${encodeURIComponent(c.id)}">${esc(c.id)}</a></td></tr>`)).join("");
-    const outside = g.otherHolds ? `${fmt(g.otherHolds)} open hold${g.otherHolds === 1 ? "" : "s"} sit outside this night and stay in the queue.` : "Every open hold falls on this night.";
+    const body = g.fridges.map(f => `<tr><th scope="row" class="mrowhead"><b>${esc(f.name)}</b>${f.county ? `<span class="mmeta">${esc(f.county)}</span>` : ""}</th>${f.cells.map(cellHtml).join("")}</tr>`).join("");
+    const tableRows = g.fridges.flatMap(f => f.holds.map(c => {
+      const nights = g.nights.filter(n => overlaps(c, n)).map(n => nightLabel(n).day + " " + nightLabel(n).mon);
+      return `<tr><td>${esc(f.name)}</td><td>${nights.map(esc).join(", ")}</td><td>${kindWord(c)}</td><td class="mono">${esc(ts(c.start))}</td><td class="mono">${esc(ts(c.end))}</td><td class="mono">${c.kind === "EXCURSION" && c.peak != null && c.peak !== "" ? esc(c.peak) + "°C" : "unknown"}</td><td class="mono">${fmt(units(c))}</td><td><a href="#/case/${encodeURIComponent(c.id)}">${esc(c.id)}</a></td></tr>`;
+    })).join("");
+    const outside = g.otherHolds ? `${fmt(g.otherHolds)} open hold${g.otherHolds === 1 ? "" : "s"} sit outside these 7 nights and stay in the queue.` : "Every open hold falls in these 7 nights.";
     const all = s.units_on_hold != null ? ` ${fmt(s.units_on_hold)} units are on hold in the whole queue.` : "";
-    mount.innerHTML = `<div class="overview morning"><p class="eyebrow">Latest night in the data · ${esc(g.night.start)} to ${esc(g.night.end.slice(11))} EAT</p><h1>${headline(g)}</h1><p class="why">Each strip is one fridge from 18:00 to 08:00. Red is a measured excursion. The triangle marks a reading above 6°C. A diamond marks a peak of 10°C or more. Hatch is a logger gap, so the temperature is unknown. A fridge with no open hold that night is not listed. Choose a strip to open its largest hold. ${outside}${all}</p><div class="mlegend"><span><i class="mdot ex"></i>Measured, above 6°C</span><span><i class="mdot hot"></i>Peak 10°C or more</span><span><i class="mdot gap"></i>Logger gap</span><span><i class="mdot safe"></i>No open hold in that hour</span></div><div class="mstrips">${strips || `<p class="why">No open hold overlaps this night.</p>`}</div><details class="rtable mtable"><summary>This night as a table (${fmt(g.nightHolds)} hold${g.nightHolds === 1 ? "" : "s"})</summary><div class="twrap"><table><thead><tr><th scope="col">Fridge</th><th scope="col">Kind</th><th scope="col">Start</th><th scope="col">End</th><th scope="col">Peak</th><th scope="col">Units</th><th scope="col">Case</th></tr></thead><tbody>${tableRows}</tbody></table></div></details><p class="eyebrow subeye">Also start here</p>${cardsHtml(rows)}<dl class="ostats"><div><dt>Measured excursions</dt><dd>${fmt(rows.filter(c => c.kind === "EXCURSION").length)}</dd></div><div><dt>Presumed (logger gap)</dt><dd>${fmt(rows.filter(c => c.kind !== "EXCURSION").length)}</dd></div><div><dt>Window</dt><dd>since ${esc(s.dataset_since || "")}</dd></div></dl></div>`;
+    const first = g.nights[0], last = g.nights[g.nights.length - 1];
+    mount.innerHTML = `<div class="overview morning"><p class="eyebrow">Latest night in the data · ${esc(g.night.start)} to ${esc(g.night.end.slice(11))} EAT</p><h1>${headline(g)}</h1><p class="why">The grid is the last 7 nights, ${esc(first.start.slice(0, 10))} through ${esc(last.end.slice(0, 10))}, oldest on the left. Each column runs 18:00 to 08:00. The number is the units on hold that night. Red is a measured excursion. Orange is a logger gap, so the temperature is unknown. A red cell with an orange bar has both. Clear means no open hold. A hold that runs through two nights shows in both cells, and each cell opens the largest hold that night. A fridge with no open hold in the week is not listed. ${outside}${all}</p><div class="mlegend"><span><i class="mdot ex"></i>Measured, above 6°C</span><span><i class="mdot gap"></i>Logger gap</span><span><i class="mdot safe"></i>Clear that night</span></div><div class="mgrid"><table class="week"><caption class="sr-only">Last 7 nights by fridge. A cell opens the largest hold on that fridge that night.</caption><thead><tr><th scope="col">Fridge</th>${heads}</tr></thead><tbody>${body || `<tr><td colspan="8">No open hold overlaps these 7 nights.</td></tr>`}</tbody></table></div><details class="rtable mtable"><summary>These 7 nights as a table (${fmt(g.weekHolds)} hold${g.weekHolds === 1 ? "" : "s"})</summary><div class="twrap"><table><thead><tr><th scope="col">Fridge</th><th scope="col">Nights</th><th scope="col">Kind</th><th scope="col">Start</th><th scope="col">End</th><th scope="col">Peak</th><th scope="col">Units</th><th scope="col">Case</th></tr></thead><tbody>${tableRows}</tbody></table></div></details><p class="eyebrow subeye">Also start here</p>${cardsHtml(rows)}<dl class="ostats"><div><dt>Measured excursions</dt><dd>${fmt(rows.filter(c => c.kind === "EXCURSION").length)}</dd></div><div><dt>Presumed (logger gap)</dt><dd>${fmt(rows.filter(c => c.kind !== "EXCURSION").length)}</dd></div><div><dt>Window</dt><dd>since ${esc(s.dataset_since || "")}</dd></div></dl></div>`;
     wireMorning(mount);
   }
 
-  return {nightBounds, groupNight, render};
+  return {nightBounds, groupNight, groupWeek, shiftNight, render};
 });
