@@ -15,7 +15,7 @@ Scope: the prototype as built, running locally on synthetic data. "Tested" names
 | 9 | Someone edits or deletes the audit log | SQLite triggers abort UPDATE/DELETE; `verify_chain` re-walks SHA-256 links | Header shows "BROKEN at row n" instead of "Intact" | Manager investigates | test_chain_valid_and_append_only, test_tamper_detected |
 | 10 | A case is decided twice (two staff at once) | Case status not OPEN; decisions take a server lock | Second decision refused | First decision stands; later changes need a new case (gap) | test_case_cannot_be_decided_twice |
 | 11 | No data connection at the site at all | Operator choice | SMS text under 160 characters, plain ASCII, built per hold | Reply codes are text only; no automated SMS handling | test_always_160_or_less |
-| 12 | Server restarts | Sessions are in memory | Everyone signs in again; queued Accepts stay on the device and resend after sign-in | none needed | |
+| 12 | Server restarts | Sessions are in memory | Everyone signs in again; queued Accepts stay on the device and resend only once the same user signs in again (never re-attributed) | none needed | |
 | 13 | Unit location wrong (missing receipt, late record) | Receipt missing: dispatch day used as arrival | Unit may be held at the wrong site for a day, or missed | Person checks the physical fridge | test_unconfirmed_receipt_uses_dispatch_day |
 | 14 | Server exposed on a network | Default bind 127.0.0.1 | Must set HOLDLINE_HOST on purpose; still demo log-in, no TLS | Not for real deployment | test_default_bind_is_localhost |
 | 15 | Demo PINs leak | They're public in the repo by design | None: synthetic demo users only | Replace with the site's identity system before any real use | |

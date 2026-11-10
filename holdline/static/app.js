@@ -28,8 +28,11 @@ function paintNet() {
 async function flush() {
   let q = Q(), left = [];
   for (const d of q) {
-    const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json", ...(d._auth || {})}, body: JSON.stringify(d)});
+    // replay only under the identity that made the decision; never re-attribute it to someone else
+    const hdr = me && me.user === d._user ? auth() : (d._auth || {});
+    const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json", ...hdr}, body: JSON.stringify(d)});
     if (r.cached) { left.push(d); }
+    else if (!r.ok && r.data && r.data.error === "sign in first") { left.push(d); alertBox(`Sign in again as ${d._user} to sync a queued decision.`); }
     else if (!r.ok) alertBox("A queued decision was refused when it synced: " + (r.data && r.data.error));
   }
   setQ(left); if (q.length !== left.length) { load(); }
@@ -127,7 +130,7 @@ async function decide(id, d) {
   if (!body.reason || body.reason.trim().length < 5) return alertBox("Write a reason first.");
   const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json", ...auth()}, body: JSON.stringify(body)});
   if (r.cached && d !== "ACCEPT") return alertBox("Offline. Releasing units needs the server to check both signatures, so it can't be queued. Units stay on hold.");
-  if (r.cached) { setQ([...Q(), {...body, second_pin: null, _auth: auth()}]); alertBox("Offline. Decision saved on this device and will sync when the connection returns. Units stay on hold until then."); return; }
+  if (r.cached) { setQ([...Q(), {...body, second_pin: null, _auth: auth(), _user: me.user}]); alertBox("Offline. Decision saved on this device and will sync when the connection returns. Units stay on hold until then."); return; }
   if (!r.ok) return alertBox(r.data.error);
   await load();
 }
