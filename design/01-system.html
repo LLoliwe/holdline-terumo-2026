@@ -1,0 +1,57 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="tokens.css"><style>
+body{width:1600px;padding:64px}
+h1{font:700 64px/1 var(--sans);letter-spacing:-.02em}
+.wm{display:flex;align-items:center;gap:14px;font:700 40px/1 var(--sans);letter-spacing:.02em}
+.wm .bar{width:10px;height:40px;background:var(--excursion)}
+.grid{display:grid;gap:24px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:28px}
+.sw{height:96px;border-radius:4px;margin-bottom:10px}
+.lab{font:600 14px var(--sans)} .hex{font:500 12px var(--mono);color:var(--ink-3)}
+.state{display:flex;gap:16px;align-items:flex-start;padding:16px 0;border-top:1px solid var(--rule-2)}
+.state:first-of-type{border-top:0}
+.state p{font-size:14px;color:var(--ink-2);margin-top:4px;line-height:1.45}
+</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:40px">
+ <div><div class="cap" style="margin-bottom:14px">Visual system · v0.2 · draft · 2026/11/10</div>
+ <h1>HOLDLINE</h1>
+ <div style="font-size:20px;color:var(--ink-2);margin-top:12px;max-width:820px;line-height:1.4">Stops warm blood reaching a patient. Every fridge reading checked, every exposed unit held, every release signed by a person.</div></div>
+ <div class="cap" style="text-align:right">Working name · team-neutral<br>Terumo BCT Africa Hackathon 2026<br>Cold chain · Data quality</div>
+</div>
+<div class="grid" style="grid-template-columns:1.1fr 1fr 1fr">
+ <div class="card"><div class="cap" style="margin-bottom:20px">Wordmark options</div>
+  <div class="wm" style="margin-bottom:28px"><span class="bar"></span>HOLDLINE</div>
+  <div class="wm" style="margin-bottom:28px;font-weight:600;letter-spacing:-.01em"><svg width="40" height="40" viewBox="0 0 40 40"><rect x="1" y="1" width="38" height="38" rx="4" fill="none" stroke="#0F1B24" stroke-width="2"/><line x1="1" y1="15" x2="39" y2="15" stroke="#B3261E" stroke-width="3"/><path d="M6 30 L14 26 L20 28 L26 18 L34 22" fill="none" stroke="#0F1B24" stroke-width="2"/></svg>Holdline</div>
+  <div class="wm" style="font:600 34px/1 var(--mono)">TRUST<span style="color:var(--excursion)">/</span>LEDGER</div>
+  <p style="font-size:13px;color:var(--ink-3);margin-top:20px;line-height:1.5">A: product mark. B: app icon, the 6°C line over a temperature trace. C: team mark if TrustLedger stands. No Terumo BCT logo is used.</p></div>
+ <div class="card"><div class="cap" style="margin-bottom:20px">Colour</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+   <div><div class="sw" style="background:#0F1B24"></div><div class="lab">Ink</div><div class="hex">#0F1B24</div></div>
+   <div><div class="sw" style="background:#F5F4EF;border:1px solid var(--rule)"></div><div class="lab">Paper</div><div class="hex">#F5F4EF</div></div>
+   <div><div class="sw" style="background:#DAD8CF"></div><div class="lab">Rule</div><div class="hex">#DAD8CF</div></div>
+   <div><div class="sw" style="background:#1F6F55"></div><div class="lab">In range</div><div class="hex">#1F6F55</div></div>
+   <div><div class="sw" style="background:#B3261E"></div><div class="lab">Excursion</div><div class="hex">#B3261E</div></div>
+   <div><div class="sw" style="background:repeating-linear-gradient(135deg,#F5EBD3 0 6px,#8A5A00 6px 8px)"></div><div class="lab">Unverified</div><div class="hex">#8A5A00</div></div>
+  </div><p style="font-size:13px;color:var(--ink-3);margin-top:16px;line-height:1.5">Red means one thing only: out of range. It's never used for decoration. All text pairs pass WCAG AA on paper.</p></div>
+ <div class="card"><div class="cap" style="margin-bottom:20px">Type</div>
+  <div style="font:700 44px/1.05 var(--sans);letter-spacing:-.01em">IBM Plex Sans</div>
+  <div style="font-size:16px;color:var(--ink-2);margin:10px 0 24px;line-height:1.5">Headings and body. Open licence, wide language support, clinical tone.</div>
+  <div style="font:500 30px/1 var(--mono)">14.9°C · 23:00</div>
+  <div style="font-size:16px;color:var(--ink-2);margin-top:10px;line-height:1.5">IBM Plex Mono: every reading, time, unit ID and count. Numbers line up in tables.</div>
+  <div class="mono" style="margin-top:20px;font-size:13px;color:var(--ink-3)">U2511-MSA-004417-RBC</div></div>
+</div>
+<div class="grid" style="grid-template-columns:1fr 1fr;margin-top:24px">
+ <div class="card"><div class="cap" style="margin-bottom:8px">States · colour, shape and word together</div>
+  <div class="state"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="#1F6F55"/></svg><div><span class="chip ok">In range</span><p>Fridge 2 to 6°C, logger reporting. Red cells and whole blood.</p></div></div>
+  <div class="state"><svg width="28" height="28"><path d="M14 3 L26 25 H2 Z" fill="#B3261E"/><rect x="13" y="10" width="2" height="8" fill="#fff"/><rect x="13" y="20" width="2" height="2" fill="#fff"/></svg><div><span class="chip ex">Excursion</span><p>Above 6°C in a fridge, or above 10°C in a cool box. Exposed units are held at once.</p></div></div>
+  <div class="state"><svg width="28" height="28"><circle cx="14" cy="14" r="10" fill="none" stroke="#8A5A00" stroke-width="2.5" stroke-dasharray="4 3"/></svg><div><span class="chip un">Unverified</span><p>Logger gap or sensor glitch (-99.0, 99.9, 0.0). We don't know, so we say so.</p></div></div>
+  <div class="state"><svg width="28" height="28"><rect x="4" y="4" width="20" height="20" rx="3" fill="#1B4F8A"/><path d="M9 14 l4 4 l7 -8" stroke="#fff" stroke-width="2.5" fill="none"/></svg><div><span class="chip ve">Verified</span><p>A named person checked it and signed. Shows who and when.</p></div></div>
+  <div class="state"><svg width="28" height="28"><rect x="3" y="11" width="22" height="6" fill="#0F1B24"/></svg><div><span class="chip ho">On hold</span><p>Unit can't be issued until a qualified person releases or discards it.</p></div></div></div>
+ <div class="card"><div class="cap" style="margin-bottom:20px">Rules</div>
+  <ol style="font-size:16px;line-height:1.55;color:var(--ink-2);padding-left:20px;display:grid;gap:14px">
+   <li><b style="color:var(--ink)">The system holds. Only a person releases.</b> No unit is ever released, discarded or matched by the software alone.</li>
+   <li><b style="color:var(--ink)">Show the reading, not a score.</b> Every flag carries the temperatures, the hours and the logger that produced it.</li>
+   <li><b style="color:var(--ink)">Gaps are honest.</b> Missing data is drawn as hatched, never smoothed over.</li>
+   <li><b style="color:var(--ink)">Built for the bench.</b> 44px touch targets, works at 360px wide, and every alert also fits in one SMS.</li>
+   <li><b style="color:var(--ink)">Settings, not code.</b> Thresholds, language and site names come from a country file.</li>
+  </ol></div>
+</div></body></html>
