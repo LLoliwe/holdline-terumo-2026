@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="tokens.css"><style>
+body{width:1200px;height:860px;padding:48px;display:flex;gap:48px;align-items:flex-start}
+.ph{width:360px;height:740px;background:var(--surface);border:10px solid var(--ink);border-radius:36px;overflow:hidden;display:flex;flex-direction:column}
+.sb{height:28px;font:600 11px var(--mono);display:flex;justify-content:space-between;padding:8px 18px;color:var(--ink-2)}
+.btn{width:100%;height:48px;font-size:15px}
+.note{max-width:300px}
+.note h3{font:600 20px var(--sans);margin:10px 0 8px} .note p{font-size:15px;line-height:1.5;color:var(--ink-2)}
+.sms{background:#E9E8E3;border-radius:16px 16px 16px 4px;padding:12px 14px;font:400 14px/1.45 var(--mono);color:var(--ink);margin:0 14px}
+</style></head><body>
+<div><div class="cap" style="margin-bottom:12px">A · Duty officer, smartphone, 360px</div>
+<div class="ph"><div class="sb"><span>13:02</span><span>3G · 41%</span></div>
+ <div style="padding:6px 18px 0;display:flex;justify-content:space-between;align-items:center"><span style="font:700 15px var(--sans)">Holdline</span><span class="chip un">Offline · synced 13:01</span></div>
+ <div style="margin:16px 18px 0;border-left:5px solid var(--excursion);padding:4px 0 4px 14px"><div class="cap" style="color:var(--excursion)">Excursion · Fridge 1 · RBTC-MSA</div><div style="font:600 22px/1.25 var(--sans);margin-top:6px">2 units held. Fridge at 6.1°C and rising.</div><div style="font-size:14px;color:var(--ink-2);margin-top:8px;line-height:1.45">Power cut 12:29, no backup. Readings above 6°C since 13:00.</div></div>
+ <div style="margin:18px 18px 0;border:1px solid var(--rule);border-radius:6px">
+  <div style="padding:14px;border-bottom:1px solid var(--rule-2)"><div class="mono" style="font-size:13px">U2510-MSA-006639-RBC</div><div style="font-size:13px;color:var(--ink-2);margin-top:4px">Red cells · AB+ · exp 2025/12/06</div><span class="chip ho" style="margin-top:10px">On hold</span></div>
+  <div style="padding:14px"><div class="mono" style="font-size:13px">U2510-MSA-004256-WB</div><div style="font-size:13px;color:var(--ink-2);margin-top:4px">Whole blood · AB+ · <span style="color:var(--excursion)">expired 2025/11/10</span></div><span class="chip ho" style="margin-top:10px">On hold</span></div></div>
+ <div style="margin:18px 18px 0;font-size:13px;color:var(--ink-2);line-height:1.45">Why held: 1 hourly reading above 6°C (6.1°C at 13:00). Source: logger RBTC-MSA-F1.</div>
+ <div style="margin-top:auto;padding:18px;display:grid;gap:10px"><button class="btn primary">Move units to backup fridge</button><button class="btn">Review each unit</button></div></div></div>
+<div><div class="cap" style="margin-bottom:12px">B · Same alert as one SMS, basic phone</div>
+<div class="ph" style="width:300px;height:420px"><div class="sb"><span>13:01</span><span>2G</span></div>
+ <div style="font:600 13px var(--sans);text-align:center;color:var(--ink-3);padding:6px 0 14px">HOLDLINE</div>
+ <div class="sms">HOLD RBTC-MSA F1 6.1C 13:00 (limit 6C). Power cut 12:29. 2 units held: U2510-MSA-006639-RBC, U2510-MSA-004256-WB. Do not issue. Reply 1 moved, 2 call me.</div>
+ <div class="mono" style="font-size:11px;color:var(--ink-3);margin:8px 14px">153 of 160 characters</div></div>
+ <div class="note" style="margin-top:28px"><div class="cap">Design rules on the phone</div><h3>The alert works with no app and no data bundle.</h3><p>Every hold produces one SMS under 160 characters with the site, reading, time and unit IDs. The app works offline and shows when it last synced. Nothing can be released from the phone. Release needs the bench screen and a second signature.</p></div></div>
+</body></html>
