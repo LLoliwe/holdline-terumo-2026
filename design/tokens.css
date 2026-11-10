@@ -1,0 +1,27 @@
+/* HOLDLINE visual system v0.2 · draft · working name, team-neutral */
+@import url('fonts.css');
+:root{
+  --ink:#0F1B24; --ink-2:#3A4752; --ink-3:#6B7781;
+  --paper:#F5F4EF; --surface:#FFFFFF; --rule:#DAD8CF; --rule-2:#ECEAE3;
+  /* states: every state has colour + shape + word, never colour alone */
+  --in-range:#1F6F55;   --in-range-bg:#E3EFE9;   /* circle, filled */
+  --excursion:#B3261E;  --excursion-bg:#F8E3E0;  /* triangle, filled */
+  --unverified:#8A5A00; --unverified-bg:#F5EBD3; /* dashed circle, hatched gaps */
+  --verified:#1B4F8A;   --verified-bg:#E1EAF5;   /* square with tick */
+  --held:#0F1B24;       /* black bar: a person put the unit on hold */
+  --band-safe:rgba(31,111,85,.08);
+  --sans:'IBM Plex Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --r:4px; --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+.mono{font-family:var(--mono)}
+.cap{font:600 11px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.chip{white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font:600 12px/1 var(--mono);letter-spacing:.04em;padding:5px 8px;border-radius:var(--r);text-transform:uppercase}
+.chip.ok{color:var(--in-range);background:var(--in-range-bg)}
+.chip.ex{color:var(--excursion);background:var(--excursion-bg)}
+.chip.un{color:var(--unverified);background:var(--unverified-bg)}
+.chip.ve{color:var(--verified);background:var(--verified-bg)}
+.chip.ho{color:#fff;background:var(--held)}
+.btn{font:600 14px/1 var(--sans);padding:11px 16px;border-radius:var(--r);border:1px solid var(--ink);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--ink);color:#fff}
