@@ -263,3 +263,16 @@ body[data-layout=page] .queue{max-width:none}
  .unitsp .c-exp{grid-column:2/4;justify-self:end}
  .chart .ax{font-size:17px}.chart .gapt{font-size:18px}
 }
+td.c-unit{white-space:normal;min-width:200px}
+/* icons (Tabler, MIT) */
+.ic{width:1em;height:1em;vertical-align:-.14em;flex:none}
+.g .ic{width:15px;height:15px}
+.list .row .g .ic{width:16px;height:16px}
+.why .g .ic{width:16px;height:16px;vertical-align:-3px}
+.search .sic{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--ink-3);pointer-events:none}
+.search input{padding-left:34px}
+.backbtn .ic{width:15px;height:15px}
+.fchip .g .ic{width:13px;height:13px;vertical-align:-2px;margin-right:2px}
+/* figures line up in lists and facts */
+.list,.facts,.ostats,.ocard .ov,.unitsp{font-variant-numeric:tabular-nums}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}

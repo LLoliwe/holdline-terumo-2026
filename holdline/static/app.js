@@ -2,6 +2,8 @@
 // offline and replayed with a client_id so the server never applies one twice. The decision rules live on the
 // server; this file only presents them. An ACCEPT never carries units or a second signature.
 "use strict";
+// Icons: Tabler Icons (MIT, Copyright (c) 2020-2026 Pawel Kuna), outline paths vendored; see static/LICENSE-tabler.txt
+const icon = (k, cls = "") => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${k}"/></svg>`;
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const fmt = n => Number(n || 0).toLocaleString("en-ZA").replace(/\u00a0/g, ",");
@@ -138,7 +140,7 @@ function paintList() {
   el.innerHTML = v.map((c, i) => {
     const ex = c.kind === "EXCURSION";
     return `<div class="row${c.id === state.sel ? " sel" : ""}${i === state.hi ? " hi" : ""}" role="option" id="r${i}" data-i="${i}" data-id="${esc(c.id)}" aria-selected="${c.id === state.sel}">
-     <span class="g ${ex ? "ex" : "un"}" aria-hidden="true">${ex ? "▲" : "◌"}</span>
+     <span class="g ${ex ? "ex" : "un"}">${icon(ex ? "ex" : "gap")}</span>
      <span class="f">${esc(c.facility_name || c.facility_id)}</span>
      <span class="u"><b>${fmt(c.n)}</b> units</span>
      <span class="m">${ex ? "Measured" : "Presumed"} · ${esc(ts(c.start))} · ${hours(c.start, c.end)} h${ex && c.peak != null ? ` · peak ${esc(c.peak)}°C` : ""}${c.facility_county ? " · " + esc(c.facility_county) : ""}</span></div>`;
@@ -232,11 +234,12 @@ async function openCase(id) {
   if (my !== caseSeq || r.aborted) return;
   el.removeAttribute("aria-busy");
   if (!r.data || r.data.error) { state.data = null; el.innerHTML = r.cached ? `<div class="empty offline"><h2>Offline, and this case is not saved on this device</h2><p>Its units stay on hold. Open it again when the connection returns, or pick a case opened earlier on this device.</p></div>` : `<div class="empty">${esc((r.data && r.data.error) || "Not found")}</div>`; return; }
-  state.data = r.data; renderCase(r.data);
+  state.data = r.data;
+  renderCase(r.data);
   if (layout() !== "split" || state.focusCase) { el.focus({preventScroll: true}); state.focusCase = false; }
 }
 
-const KIND = c => c.kind === "EXCURSION" ? ["ex", "▲", "Measured excursion"] : ["un", "◌", "Presumed: logger gap"];
+const KIND = c => c.kind === "EXCURSION" ? ["ex", icon("ex"), "Measured excursion"] : ["un", icon("gap"), "Presumed: logger gap"];
 function evidence(d) {
   const rs = d.readings, c = d.case;
   const vals = rs.filter(r => r[1] > -50 && r[1] < 60);
@@ -253,12 +256,12 @@ function renderCase(d) {
   const alsoCases = [...new Set(alsoUnits.flatMap(u => also[u].map(x => x.case_id)))];
   const canRelease = open && role() === "qualified_releaser";
   const status = open ? `<span class="kick hold">On hold · do not issue</span>` : c.status === "NO_UNITS" ? `<span class="kick info">Logged · no units in this fridge</span>` : `<span class="kick done">${esc(c.status)} · decided</span>`;
-  const backBtn = layout() === "split" ? "" : `<button type="button" class="btn sm ghost backbtn" id="back">← Queue</button>`;
+  const backBtn = layout() === "split" ? "" : `<button type="button" class="btn sm ghost backbtn" id="back">${icon("back")} Queue</button>`;
   $("#case").innerHTML = `
   <div class="sheet" data-case="${esc(c.id)}">
    <header class="chead">${backBtn}${status}
     <h1>${esc(f.name || c.facility_id)}</h1>
-    <p class="why"><span class="g ${cls}" aria-hidden="true">${glyph}</span> <b>${label}.</b> ${esc(c.reason)}.</p>
+    <p class="why"><span class="g ${cls}">${glyph}</span> <b>${label}.</b> ${esc(c.reason)}.</p>
     <p class="meta"><span>${esc(ts(c.start))} → ${esc(ts(c.end))} EAT</span><span>${esc(f.county || "")}</span><span>${esc(f.connectivity || "")}</span><span>backup power: ${f.has_blood_fridge_backup_power === "True" ? "yes" : "no"}</span><span class="mono">${esc(c.id)}</span></p>
    </header>
    <dl class="facts" aria-label="Evidence summary">

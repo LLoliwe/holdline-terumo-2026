@@ -1,6 +1,8 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HOLDLINE · cold chain hold queue</title><link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="app.css"></head>
 <body class="layout-split">
+<!-- Icons: Tabler Icons, MIT, see LICENSE-tabler.txt -->
+<svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-ex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" /></symbol><symbol id="i-gap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 18l.01 0" /><path d="M9.172 15.172a4 4 0 0 1 5.656 0" /><path d="M6.343 12.343a7.963 7.963 0 0 1 3.864 -2.14m4.163 .155a7.965 7.965 0 0 1 3.287 2" /><path d="M3.515 9.515a12 12 0 0 1 3.544 -2.455m3.101 -.92a12 12 0 0 1 10.325 3.374" /><path d="M3 3l18 18" /></symbol><symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></symbol><symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></symbol></svg>
 <a class="skip" href="#case">Skip to case</a>
 <header class="bar">
  <div class="brand"><svg width="22" height="22" viewBox="0 0 40 40" aria-hidden="true"><rect x="1" y="1" width="38" height="38" rx="4" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="1" y1="15" x2="39" y2="15" stroke="#E0574F" stroke-width="3.5"/><path d="M6 30 L14 26 L20 28 L26 18 L34 22" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
@@ -28,11 +30,11 @@
 <main id="main">
  <section class="queue" id="queuepane" aria-label="Hold queue">
   <div class="qtools">
-   <div class="search"><input id="q" type="search" placeholder="Search facility, county or case" aria-label="Search the queue" autocomplete="off"><kbd>/</kbd></div>
+   <div class="search"><svg class="ic sic" aria-hidden="true"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search facility, county or case" aria-label="Search the queue" autocomplete="off"><kbd>/</kbd></div>
    <div class="seg" role="tablist" aria-label="Status" id="tabs"></div>
    <div class="filters" role="group" aria-label="Filters">
-    <button class="fchip" data-f="EXCURSION" aria-pressed="false"><span class="g ex">▲</span>Measured</button>
-    <button class="fchip" data-f="GAP" aria-pressed="false"><span class="g un">◌</span>Presumed</button>
+    <button class="fchip" data-f="EXCURSION" aria-pressed="false"><span class="g ex"><svg class="ic" aria-hidden="true"><use href="#i-ex"/></svg></span>Measured</button>
+    <button class="fchip" data-f="GAP" aria-pressed="false"><span class="g un"><svg class="ic" aria-hidden="true"><use href="#i-gap"/></svg></span>Presumed</button>
     <label class="sort">Sort <select id="sort"><option value="new">Newest</option><option value="old">Oldest</option><option value="units">Most units</option></select></label>
    </div>
    <div class="qcount" id="qcount" aria-live="polite"></div>

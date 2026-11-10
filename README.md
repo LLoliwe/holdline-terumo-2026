@@ -111,6 +111,7 @@ Every number in this README was produced by the code in this repo (`python3 -m h
 
 ## Bundled third-party material
 - IBM Plex Sans and IBM Plex Mono fonts (`holdline/static/fonts/`), SIL Open Font License 1.1, licence text in `holdline/static/fonts/OFL.txt`.
+- Four outline icons from Tabler Icons (MIT), vendored as inline SVG paths; licence text in `holdline/static/LICENSE-tabler.txt`.
 - No other third-party code; Python standard library only.
 
 ## Team

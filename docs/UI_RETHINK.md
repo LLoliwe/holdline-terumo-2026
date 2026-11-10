@@ -31,9 +31,13 @@ Earlier UI candidates built from `main` (v15 "Linear glass" and v16 Carbon) were
 | Large tables | TanStack Virtual 3.19 (MIT, 62 KB unminified), AG Grid Community 36.3 (MIT, large) | Not needed: the largest case (758 units) renders in about 20 ms; a per-case unit filter covers the search need. |
 | Components and styles | Carbon styles 1.119 (Apache-2.0, as in v16) | Not used: 225 KB of CSS for buttons, inputs and a table; native elements with about 15 KB of own CSS do the same job offline. |
 | Command menu | ninja-keys 1.2.2 (MIT, last release 2022) | Not built: the app has five actions; search plus `/ j k Enter Esc ?` covers them. |
-| Icons | lucide-static (ISC) | Not needed: three glyphs, each paired with a word. |
+| Icons | Tabler Icons (MIT, 22k stars, active), Lucide (ISC), Phosphor (MIT), Hugeicons (free set MIT, Pro paid) | **Used: Tabler**, four outline icons in one inline sprite (about 1 KB), each next to a word. Lucide's repo licence reads as mixed in GitHub's metadata, so Tabler's plain MIT was simpler. |
+| Motion | Animate UI 2.0 (React, Motion), Motion One, native View Transitions | Not used. Animate UI needs React; the native cross-fade was measured at about 130 ms per case open instead of about 20 ms, which slows `j`/`k` triage. Motion is limited to short hover and focus transitions, off under reduced motion. |
+| Visual effects | Shaders (MIT, 200+ WebGPU components), WebGPU particle work | Rejected: decorative GPU load on clinic hardware, and motion in an evidence view distracts from the readings. |
+| Component kits seen in the entrant's saved posts | Mebius charts kit (Figma freebie), HorizonX, Bencho, Cue | Rejected: Figma or React blocks, sign-up or Pro tiers, or no clear open licence. |
+| Type | IBM Plex (OFL, already shipped), Inter (OFL), Geist (OFL) | Kept Plex: already vendored and its mono suits ids and readings; tabular figures turned on so numbers line up. |
 
-No dependency is added. Everything ships as plain files served by the Python server, so the offline shell stays small.
+No package dependency is added; the only third-party additions are four Tabler icon paths. Everything ships as plain files served by the Python server, so the offline shell stays small.
 
 ## Engineering findings fixed on this branch
 
@@ -49,17 +53,17 @@ No dependency is added. Everything ships as plain files served by the Python ser
 
 | Metric | main | v15 | v16 | ui/rethink |
 |---|---|---|---|---|
-| First contentful paint (ms) | 68 | 116 | 44 | 48 |
-| Open an ordinary case (ms) | 21 | 35 | 17 | 19 |
-| Open the 758-unit case (ms) | 21 | 91 | 101 | 21 |
+| First contentful paint (ms) | 68 | 116 | 44 | 48 to 60 |
+| Open an ordinary case (ms) | 21 | 35 | 17 | 15 |
+| Open the 758-unit case (ms) | 21 | 91 | 101 | 24 |
 | Requests per case open | 3 | 5 | 4 | 2 |
-| 10 consecutive case opens (ms) | 242 | 395 | 214 | 195 |
+| 10 consecutive case opens (ms) | 242 | 395 | 214 | 212 |
 | Long tasks during those opens (ms) | 0 | 0 | 54 | 0 |
 | Stale response shows the right case | FAIL | FAIL | FAIL | PASS |
-| Shell size, JS+CSS+HTML (raw / gzip KB) | 38 / 13 | 60 / 20 | 286 / 42 | 69 / 22 |
+| Shell size, JS+CSS+HTML (raw / gzip KB) | 38 / 13 | 60 / 20 | 286 / 42 | 72 / 23 |
 | Data in first 2.5 s (KB) | 353 | 355 | 356 | 440 |
 
-The extra data at load is the full queue (412 rows instead of 200). Heap figures from headless Chromium were too coarse to compare and are not reported.
+The extra data at load is the full queue (412 rows instead of 200); the page holds about 3,450 elements against 1,473 for the same reason. A View Transitions cross-fade between cases was tried and removed: it raised case-open time from about 20 ms to about 130 ms. Heap figures from headless Chromium were too coarse to compare and are not reported.
 
 ## Checks
 
