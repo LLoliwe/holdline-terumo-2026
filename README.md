@@ -1,6 +1,6 @@
-# TrustLedger · HOLDLINE: the system holds, only a person releases
+# HOLDLINE: the system holds, only a person releases
 
-Terumo BCT Africa Hackathon 2026 · Challenge area: data quality and cold chain
+Terumo BCT Africa Hackathon 2026 · Challenge area: data quality and cold chain · Individual entry: Lebohang Loliwe
 
 Status: **working prototype on synthetic data**. Not validated with real users or real fridges. Not a medical device.
 
@@ -35,7 +35,7 @@ Live demo: not hosted yet (see Known limits). Run locally in under 2 minutes.
 Python 3.10+ only. No packages to install.
 
 ```
-git clone <this repo> && cd trustledger-terumo-2026
+git clone <this repo> && cd holdline-terumo-2026
 # put the organiser starter dataset CSVs in ./data (not committed: no redistribution licence)
 python3 -m holdline.server data --port 8080 --since 2026-10-01
 # open http://localhost:8080
@@ -93,17 +93,14 @@ Data quality note: the dataset README says 60 sensor glitch readings; the file c
 - **Languages**: English only for now.
 
 ## AI tools we used
-- **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the team lead's direction, and analysed the dataset.
+- **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, and analysed the dataset.
 - **ChatGPT (OpenAI)** and **Grok (xAI)**: earlier research and planning notes outside this repo.
 Every number in this README was produced by the code in this repo (`python3 -m holdline.evaluate`).
 
 ## Team
 | Name | Role | Country | Presenting Friday (in person / online) |
 |------|------|---------|-----------------------------------------|
-| Lebohang Loliwe | Lead, product and build | South Africa | TBC |
-| Admire Chitove | TBC | Zimbabwe | TBC |
-| Okoye Chiagozie Delight | TBC | Nigeria | TBC |
-| Isaac Briandt | TBC | Ghana | TBC |
+| Lebohang Loliwe (individual) | Everything: product, build, data analysis | South Africa | TBC (finals demo after 11:10 EAT on 13 Nov; backup recorded demo of 3 min or less) |
 
 ## Known limits and next steps
 - Synthetic data only; the user is a hypothesis; no clinician has reviewed the release rules.

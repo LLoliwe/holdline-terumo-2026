@@ -10,30 +10,23 @@ State: **draft**. The visual system is rendered as static mock-ups. Nothing has 
 | 11:42 | Lebo approved, Quest sent | Reply to Okoye with Lebo's number, noting the solo request is open. |
 | 11:43 | Lebo | Asked to file all signals, build a visual system, and write a handover. |
 | 11:44 | Lebo | Asked for the SNR OMEGA loop (PRY-441). |
-| 11:45 | Lebo | Approved filing the roster as Team TrustLedger with all four members. |
+| 11:45 | Lebo | Approved filing the roster under a team name (superseded 12:19 by the individual entry). |
 | 11:46 | Lebo | Asked for a timestamped audit log here and in the report. |
 | 11:47 | Quest | Read 56 Gmail results, the brief, the README template, the deck template and the starter dataset (Drive, read-only). |
 | 11:50 | Quest | Checked team email for a teammate's roster or repo: none found. WhatsApp can't be seen. |
-| 11:50 | Quest | Created private repo LLoliwe/trustledger-terumo-2026, README seeded (inside the build window). |
+| 11:50 | Quest | Created private repo (now LLoliwe/holdline-terumo-2026, renamed 12:22), README seeded (inside the build window). |
 | 11:51 | Quest | Read the check-in form: 7 fields, no email collected, no GitHub access instruction. |
 | 11:52 | Quest, per Lebo's 11:45 approval | Submitted the roster form. Confirmation: "Your response has been recorded." |
 | 11:53 to 11:58 | Quest | Data checks on the starter dataset. Designed the visual system, rendered it, and did two review rounds. |
 | 11:59 | Quest | Pushed docs/signals.md and design/ to the repo. |
 | 12:00 | Quest | Wrote this handover. |
 
-## Roster as filed (11:52)
-Team TrustLedger · filed by Lebohang Loliwe · Roster and repository, Tuesday 14:00
-- Lebohang Loliwe, Founder of Pryntor, South Africa
-- Admire Chitove, role to be confirmed, Zimbabwe
-- Okoye Chiagozie Delight, Pharmacy student, problem research and workflow design, Nigeria
-- Isaac Briandt, Software engineer, Ghana
-GitHub: https://github.com/LLoliwe/trustledger-terumo-2026
-Question field: "The repository is private until it goes public before the deadline. Please send the GitHub usernames to add as collaborators. Also, Lebohang's request to compete individually is still open with Hany. This roster is filed in case that isn't granted."
-Roles come from each member's own intro email. Admire sent none.
+## Entry status (updated 12:22)
+Individual entry: **Lebohang Loliwe (individual)**, confirmed by Hany (Talo) at 12:19, still eligible for the overall prize. The 11:52 roster form was filed under a team name and needs correcting; nothing is resubmitted until Lebo approves. Teammate details removed from this repo.
 
 ## SNR OMEGA stages
 1. **Observe:** All Gmail threads since 2026/10/15, the brief, the kit, the dataset README and data dictionary.
-2. **Establish truth:** Lebo confirmed participation at 07:04, before the 08:00 deadline. Solo is still unresolved. The roster was due 13:00 and filed at 11:52. 2,119 exposed-and-transfused units, recounted from units.csv.
+2. **Establish truth:** Lebo confirmed participation at 07:04, before the 08:00 deadline. Individual entry confirmed 12:19. The roster was due 13:00 and filed at 11:52. 2,119 exposed-and-transfused units, recounted from units.csv.
 3. **Extract signal:** The prototype is 25 points and "a clickable mock-up alone is not enough". Person-in-control and fallback are mandatory. Low power and connectivity count for 15. The challenge area is data quality and cold chain.
 4. **Remove noise:** Dropped unrelated hackathon emails and dropped generic dashboard looks. No Terumo BCT logo, because the rules don't grant its use.
 5. **Highest-leverage action:** One workflow. An excursion triggers an automatic hold, a person decides (Discard / Change / Release with a second signature), and an SMS fallback. This scores on prototype, AI-safety and African conditions at once.
@@ -67,13 +60,13 @@ Roles come from each member's own intro email. Admire sent none.
 - Mock-ups score nothing on their own. The prototype carries 25 points.
 
 ## Open decisions and next actions, in order
-1. Lebo: solo or TrustLedger. Chase Hany if there's no reply by 14:00.
-2. Lebo: send teammates' and organisers' GitHub usernames, or decide to make the repo public now.
-3. Team: agree the Holdline workflow at the 14:00 expert Q&A (optional) and check the problem with the expert.
+1. DONE 12:19: individual entry confirmed. Correct the 11:52 roster form once Lebo approves the exact text.
+2. Repo goes public before Wed 11:00 SAST (recommend 08:00); Grok decides per Lebo.
+3. Optional: test the Holdline workflow at the 14:00 expert Q&A (optional) and check the problem with the expert.
 4. DONE 12:11: build and baseline (see log below).
-5. Lebo: choose the submission, HOLDLINE, the Drive CP5 custody workbench, or a merge. Two builds exist.
+5. Grok decides (per Lebo 12:14): HOLDLINE, the Drive CP5 custody workbench, or a merge. See docs/FOR_GROK.md.
 6. 19:00 check-in 1. 05:00 check-in 2. Video by 09:00 Wed. Submit by 11:00 Wed SAST.
-7. Friday showcase clash: needs Hany's written slot.
+7. Finals demo after 11:10 EAT (10:10 SAST) on Fri 13 Nov, after COS2611 08:00 to 10:00 SAST: tight but clear. Record a backup demo of 3 min or less.
 
 
 ## Build log (SAST, 2026/11/10)
@@ -92,3 +85,6 @@ Later-data check (units collected from 2026/07/01): precision 16.2% to 48.6%, re
 - Not hosted: a public host would carry the organiser data. Lebo decides.
 - Residency and truth both day-level; disclosed in README.
 - Demo users, no real log-in; SMS simulated; no video yet.
+
+- 12:16 docs/FOR_GROK.md decision brief (d2b5a38). 12:20 glitch hours bridged inside hot runs (0f47fe3), metrics unchanged.
+- 12:22 Individual entry: repo renamed trustledger-terumo-2026 to holdline-terumo-2026 (GitHub redirects the old URL and API path; checked). Description, README, UI header, design notes, handover and FOR_GROK made individual; team name and teammates removed.

@@ -1,6 +1,6 @@
-# For Grok: decision brief (2026/11/10 12:16 SAST)
+# For Grok: decision brief (2026/11/10 12:16 SAST, updated 12:22 for the individual entry)
 
-From: Quest (HOLDLINE build, private repo LLoliwe/trustledger-terumo-2026). Lebo has said Grok makes the decisions. Write your answers into the Drive "Terumo Hackathon" folder (START HERE or a new file). We re-read it at every milestone and follow it. Until you decide, nothing irreversible happens: the repo stays private, nothing is hosted, nothing is submitted.
+From: Quest (HOLDLINE build, private repo LLoliwe/holdline-terumo-2026 (renamed from trustledger-terumo-2026; old link redirects)). Lebo has said Grok makes the decisions. Write your answers into the Drive "Terumo Hackathon" folder (START HERE or a new file). We re-read it at every milestone and follow it. Until you decide, nothing irreversible happens: the repo stays private, nothing is hosted, nothing is submitted.
 
 ## Correction first: there IS an answer key for temperature exposure
 The handoff brief says "the organiser ships NO answer key". That's wrong for cold chain. `units.csv` carries `temp_excursion_exposed`. gen.py sets it from the fridge's true simulated temperature (more than 6°C for 4 consecutive hours marks the day), including hours the logger dropped, and from cool box peaks above 10°C. It isn't derived from the logs we score, so detector-vs-baseline scoring on it isn't circular. Labels for custody, missingness and glitches are still derived, as your brief says.
@@ -19,12 +19,11 @@ Cost of a merge: about 3 to 4 hours (import the R1 blank-receipt rule as a hold 
 Options: (a) local run plus video only, (b) public free host with the dataset.
 Recommendation: **(a)**. Your own brief says the kit has no public redistribution right. A host would serve kit-derived data publicly. The README gives a 2-minute local run; the video covers the judges.
 
-## Decision 3: team table
-Roster submitted 11:52 as TrustLedger: Lebohang Loliwe (lead, ZA), Admire Chitove (ZW), Okoye Chiagozie Delight (NG), Isaac Briandt (GH). Roles and Friday presenters are "TBC" in the README.
-Recommendation: list real contributions only. If teammates haven't contributed by check-in 1 (19:00), say so rather than invent roles. Friday: Lebo has COS2611 08:00 to 10:00 SAST; ask the organisers for a slot after 11:00.
+## Decision 3: entry status (RESOLVED 12:19)
+Individual entry, Lebohang Loliwe (individual), confirmed by Hany. Team name and teammates are removed from the repo. Open item: correct the 11:52 roster form (filed under a team name) once Lebo approves the exact text. Finals demo after 11:10 EAT on Fri 13 Nov (Lebo's COS2611 ends 10:00 SAST = 11:00 EAT); a backup recorded demo of 3 min or less is needed.
 
 ## Decision 4: Pryntor wordmark on the entry
-Recommendation: **no**. It's a team entry, and R3 isn't signed off ("Corporate final signoff remains open"). We use only the R3 ink colour #111116 plus IBM Plex. A small "TrustLedger" label is enough.
+Recommendation: **no**. R3 isn't signed off, and the entry is personal, not Pryntor's ("Corporate final signoff remains open"). We use only the R3 ink colour #111116 plus IBM Plex. The product name HOLDLINE carries it.
 
 ## Decision 5: when the repo goes public
 Required public by Wed 2026/11/11 11:00 SAST.
