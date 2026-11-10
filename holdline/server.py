@@ -2,7 +2,8 @@
 
 python -m holdline.server DATA_DIR [--port 8080] [--since 2026-10-01]
 """
-import sys, time, os, json, threading, ipaddress
+import sys, time, os, json, threading, ipaddress, hashlib
+from pathlib import Path
 from datetime import date, datetime, timedelta
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
@@ -56,11 +57,21 @@ def setup(path, since):
     cfg = load_config()
     temps = data.temperature_logs(path); outs = data.outages(path)
     units = data.units(path); trs = data.transfers(path)
-    db = store.connect(os.environ.get("HOLDLINE_DB", ":memory:"))
+    db_path = os.environ.get("HOLDLINE_DB")
+    if not db_path:
+        # Keep reviewed cases beside their fixed input dataset. Different rules
+        # or date windows get separate stores rather than silently mixing cases.
+        identity = json.dumps({"config": cfg, "since": str(since)}, sort_keys=True)
+        key = hashlib.sha256(identity.encode()).hexdigest()[:16]
+        state_dir = Path(path).resolve() / ".holdline"
+        state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        db_path = str(state_dir / f"cases-{key}.db")
+    db = store.connect(db_path)
     n = store.build(db, temps, outs, units, trs, cfg, since=since)
     STATE.update(cfg=cfg, db=db, temps=temps, fac=data.facilities(path), cases=n, since=since,
                  metrics=evaluate.run(path))
     print(f"HOLDLINE ready: {n} hold cases since {since}", flush=True)
+    print("Decision store: " + ("temporary (explicit :memory: override)" if db_path == ":memory:" else db_path), flush=True)
 
 def readings_around(fid, start, hours=24):
     s = datetime.fromisoformat(start)

@@ -22,6 +22,7 @@ Build window: Tue 2026/11/10 11:00 SAST to Wed 2026/11/11 11:00 SAST. All times 
 | 15:28 | IBM Plex font licence (SIL OFL 1.1) added. |
 | 15:37 | Integration: units held on every day of a multi-day event (fix, 4 tests); session expiry, PIN lockout, request guards, exact-meaning idempotency (24 tests); interface redesign and 404 page; events with no units logged outside the queue; newest 20 open cases cached for offline use. 60 tests pass with the starter data. |
 | 15:53 | Two fixes ported from a tested logic baseline: a Change listing a unit outside the case is refused with nothing written; cross-case hold warning per case and per unit. 2 tests added; 62 pass with the starter data. |
+| 17:23–17:28 | Reproduced two missed regressions: Accept with selected unit IDs released those units without signatures; normal server restart erased reviewed cases and audit history. Server now ignores release selections for Accept, browser strips them, and SQLite persists beside the dataset by default. Four added tests, including the HTTP boundary and restart/retry preservation; all 66 pass with the official starter dataset. Independent review subsequently confirmed both fixes. |
 
 ## How to verify
 See README "How to run it". `python3 -m holdline.evaluate data` reproduces every metric.

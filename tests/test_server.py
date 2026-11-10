@@ -69,6 +69,14 @@ class Http(unittest.TestCase):
     def test_default_bind_is_localhost(self):
         import inspect
         self.assertIn('"127.0.0.1"', inspect.getsource(server.main))
+    def test_officer_accept_with_release_selection_keeps_every_unit_quarantined(self):
+        t = self.login("demo.officer", "1111")
+        code, r = self.post("/api/decide", {"case_id": self.cid, "decision": "ACCEPT",
+                           "reason": "Synthetic hold confirmed", "unit_ids": ["U0"],
+                           "client_id": "officer-accept-ticked"}, t)
+        self.assertEqual(code, 200, r)
+        self.assertEqual(r["released"], [])
+        self.assertEqual({row[0] for row in server.STATE["db"].execute("SELECT state FROM case_units")}, {"QUARANTINED"})
 
 if __name__ == "__main__":
     unittest.main()

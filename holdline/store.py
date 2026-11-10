@@ -122,7 +122,9 @@ def decide(db, case_id, decision, actor, role, reason, unit_ids=None, client_id=
         if decision == "CHANGE" and not unit_ids:
             raise ValueError("CHANGE needs the list of units to release")
     all_units = [r["unit_id"] for r in db.execute("SELECT unit_id FROM case_units WHERE case_id=?", (case_id,))]
-    rel = all_units if decision == "REJECT" else (unit_ids or [])
+    # ACCEPT is hold-only, even if the browser still has release boxes ticked.
+    # Only CHANGE/REJECT pass the qualified-release checks above.
+    rel = all_units if decision == "REJECT" else (unit_ids or []) if decision == "CHANGE" else []
     foreign = sorted({u for u in rel if u not in all_units})
     if decision == "CHANGE" and foreign:
         raise ValueError(f"CHANGE lists {len(foreign)} unit(s) not in this case ({', '.join(foreign[:5])}); nothing written")

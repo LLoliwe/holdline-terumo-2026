@@ -197,7 +197,7 @@ async function decide(id, d) {
     client_id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random())};
   // Only releases use a second signature. An ACCEPT never sends one, so a queued
   // offline ACCEPT can never be refused later for a missing second-signer PIN.
-  if (d === "ACCEPT") { body.second_signer = null; body.second_pin = null; }
+  if (d === "ACCEPT") { body.second_signer = null; body.second_pin = null; body.unit_ids = []; }
   if (!body.reason || body.reason.trim().length < 5) return alertBox("Write a reason first.");
   const r = await api("/api/decide", {method: "POST", headers: {"Content-Type": "application/json", ...auth()}, body: JSON.stringify(body)});
   if (r.cached && d !== "ACCEPT") return alertBox("Offline. Releasing units needs the server to check both signatures, so it can't be queued. Units stay on hold.");
