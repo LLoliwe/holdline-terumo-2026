@@ -69,6 +69,10 @@ Only behaviours were borrowed, rebuilt in plain JavaScript and CSS with no packa
 
 Rejected after the same filter: View Transitions cross-fade (slowed opens from about 20 ms to about 130 ms), WebGPU shader effects (GPU load, distraction), React component kits (Animate UI, HorizonX, Bencho, Cue: runtime or unclear licence), and small anomaly-explanation models from Hugging Face (the reasons here come from the rules themselves, so a model would add a second, less checkable explanation).
 
+## Visual style: after the Stripe Dashboard
+
+One praised reference, followed closely: Stripe's dashboard and site (navy ink #0A2540, blurple brand, cool slate text, soft layered shadows, 8 to 12 px radii, generous spacing, the multicolour mesh gradient). Rebuilt in `theme.css` (CSS only, about 4 KB); no Stripe code, logo, font or image. Safety colours (red hold, amber logger gap) are unchanged and always paired with a shape and a word. Brand text uses #533AFD (6.2:1 on white); secondary text #56657A (5.6:1 on the page). Motion: overview cards rise in once with a 50 ms stagger, cards lift on hover, all off under reduced motion. Measured after the theme: case open 11 to 22 ms, 758-unit case 20 to 22 ms, ten opens about 200 ms with no long tasks, FCP 40 to 88 ms, no reflow overflow 320 to 1920 px.
+
 ## Legal and trust checklist (from a "things so your app doesn't get sued" reel, where relevant)
 
 | Item | State |

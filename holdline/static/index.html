@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HOLDLINE · cold chain hold queue</title><link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="app.css">
+<title>HOLDLINE · cold chain hold queue</title><link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="tokens.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="phone.css"></head>
 <body class="layout-split">
 <!-- Icons: Tabler Icons, MIT, see LICENSE-tabler.txt -->
@@ -36,7 +36,7 @@
  <p><b>Open-source parts.</b> IBM Plex Sans and Mono (SIL Open Font License 1.1). Four Tabler outline icons (MIT). No other third-party code. Details in THIRD_PARTY.md in the repository.</p>
  <form method="dialog"><button class="btn">Close</button></form></dialog>
 <dialog id="help" aria-labelledby="help-t"><h2 id="help-t">Keyboard</h2>
- <dl class="keys"><dt>/</dt><dd>Search the queue</dd><dt>j / k or ↓ / ↑</dt><dd>Next / previous hold</dd><dt>Enter</dt><dd>Open the highlighted hold</dd><dt>Esc</dt><dd>Back to the queue</dd><dt>← / →</dt><dd>Step through readings when the chart has focus</dd><dt>Ctrl K / ⌘ K</dt><dd>Command menu: jump to any hold or run an action</dd><dt>?</dt><dd>This list</dd></dl>
+ <dl class="keys"><dt>/</dt><dd>Search the queue</dd><dt>j / k or ↓ / ↑</dt><dd>Next / previous hold</dd><dt>Enter</dt><dd>Open the highlighted hold</dd><dt>Esc</dt><dd>Back to the queue</dd><dt>← / →</dt><dd>Step through readings when the chart has focus</dd><dt>↑ / ↓ on a fridge strip</dt><dd>Previous / next fridge on the morning view</dd><dt>Ctrl K / ⌘ K</dt><dd>Command menu: jump to any hold or run an action</dd><dt>?</dt><dd>This list</dd></dl>
  <form method="dialog"><button class="btn">Close</button></form></dialog>
 <main id="main">
  <section class="queue" id="queuepane" aria-label="Hold queue">
@@ -57,4 +57,5 @@
 </main>
 <div id="toasts" class="toasts"></div>
 <script src="chart.js"></script>
+<script src="overview.js"></script>
 <script src="app.js"></script></body></html>

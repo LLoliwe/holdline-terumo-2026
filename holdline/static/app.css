@@ -308,3 +308,26 @@ td.c-unit{white-space:normal;min-width:200px}
 .steps .now{color:var(--ink);font-weight:600}.steps .now .dot{border:2px solid var(--ink)}
 .steps .skip{text-decoration:line-through;opacity:.6}
 .about{max-width:560px}.about p{font-size:14px;line-height:1.5;margin:0 0 10px}
+/* morning-after fridge strips */
+.overview.morning h1{max-width:36ch}
+.mlegend{display:flex;flex-wrap:wrap;gap:14px;margin:16px 0 8px;font:600 12px var(--mono);color:var(--ink-2)}
+.mlegend .mdot{display:inline-block;width:14px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.mlegend .mdot.ex{background:var(--excursion)}
+.mlegend .mdot.hot{background:var(--excursion);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+.mlegend .mdot.gap{background:repeating-linear-gradient(45deg,var(--unverified),var(--unverified) 1px,transparent 1px,transparent 4px);border:1px solid var(--unverified)}
+.mlegend .mdot.safe{background:var(--band-safe);border:1px solid var(--rule)}
+.mstrips{display:grid;gap:10px;margin:12px 0 18px}
+.mfridge{background:#fff;border:1px solid var(--rule);border-radius:8px;padding:10px 12px 8px}
+.mstrip{display:grid;gap:2px;text-decoration:none;color:inherit;border-radius:6px}
+.mstrip:hover{background:var(--hover)}
+.mhead{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.mhead b{font-size:15px}
+.mmeta{font:12px var(--mono);color:var(--ink-3)}
+.mstrip svg{width:100%;height:auto;display:block}
+.mstrip .ax{font:11px var(--mono);fill:var(--ink-3)}
+.mholds{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.mholds a{font:12px var(--mono);color:var(--ink-2);text-decoration:none;border:1px solid var(--rule);border-radius:99px;padding:3px 8px;background:var(--paper)}
+.mholds a:hover{border-color:var(--ink);color:var(--ink)}
+.mtable{margin:8px 0 22px}
+.subeye{margin-top:8px}
+@media (prefers-reduced-motion:reduce){.mstrip,.mholds a{transition:none}}

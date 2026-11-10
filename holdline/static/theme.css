@@ -1,0 +1,69 @@
+/* HOLDLINE theme, after the publicly praised Stripe Dashboard and stripe.com visual language:
+   deep navy ink, blurple brand, cool slate text, soft layered shadows, 8 px radii, generous spacing,
+   a hand-built mesh-gradient brand band. Rebuilt from scratch: no Stripe code, logo, font or image.
+   Safety colours (excursion red, logger-silent amber, released green) are unchanged and stay
+   paired with shape and word. All text pairs checked at 4.5:1 or better. */
+:root{
+  --ink:#0A2540; --ink-2:#425466; --ink-3:#56657A;
+  --paper:#F6F9FC; --surface:#FFFFFF; --rule:#E3E8EE; --rule-2:#EEF2F6;
+  --brand:#635BFF; --brand-ink:#533AFD; --brand-bg:#F0EEFF;
+  --verified:#533AFD; --verified-bg:#F0EEFF;
+  --r:8px;
+  --sh-1:0 1px 1px rgba(10,37,64,.04),0 2px 5px -1px rgba(50,50,93,.10),0 1px 3px -1px rgba(0,0,0,.08);
+  --sh-2:0 13px 27px -5px rgba(50,50,93,.18),0 8px 16px -8px rgba(0,0,0,.20);
+  --focus:0 0 0 3px rgba(99,91,255,.45);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+body{background:var(--paper)}
+
+/* top bar: navy with a thin brand gradient rule */
+.bar{background:#0A2540;box-shadow:inset 0 -2px 0 0 transparent;border-bottom:0}
+.bar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,#635BFF,#A960EE 35%,#FF7A59 70%,#FFCB57);pointer-events:none}
+.bar .brand svg rect,.bar .brand svg path{stroke:#fff}
+.bar .brand{letter-spacing:.06em}
+.bar .btn{border-color:rgba(255,255,255,.22);border-radius:999px}
+.bar .btn:hover{background:rgba(255,255,255,.10)}
+.context{background:var(--paper);border-bottom-color:var(--rule)}
+
+/* buttons: pill primary in blurple, soft secondary */
+.btn{border-radius:var(--r);border-color:var(--rule);box-shadow:var(--sh-1);transition:transform .08s var(--ease),box-shadow .15s var(--ease),background .15s var(--ease)}
+.btn:hover{box-shadow:var(--sh-2)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:#5851EA}
+.btn.ghost{box-shadow:none}
+.btn.danger{border-radius:var(--r)}
+
+/* surfaces */
+.queue{background:var(--surface);border-right-color:var(--rule)}
+.panel,.decide,.facts,dl.facts{border:0;border-radius:12px;box-shadow:var(--sh-1);background:#fff}
+.decide{box-shadow:var(--sh-2);border:0}
+.sheet{gap:24px 28px;padding:28px 36px 64px}
+.chead h1{font-size:30px;letter-spacing:-.015em;color:var(--ink)}
+.steps .done .dot{background:var(--brand-ink);border-color:var(--brand-ink)}
+
+/* landing: mesh-gradient brand band across the whole work pane, behind the headline */
+#case:has(.overview){background:
+   radial-gradient(38% 260px at 6% 0,rgba(169,96,238,.40),transparent 70%),
+   radial-gradient(34% 260px at 36% 0,rgba(99,91,255,.38),transparent 70%),
+   radial-gradient(30% 240px at 70% 0,rgba(255,122,89,.30),transparent 70%),
+   radial-gradient(26% 220px at 98% 0,rgba(255,203,87,.34),transparent 70%),
+   var(--paper)}
+.overview h1{color:var(--ink)}
+/* motion: cards rise in once, staggered; off under reduced motion */
+@media (prefers-reduced-motion:no-preference){
+  .ocard,.ostats>*{animation:rise .42s var(--ease) both}
+  .ocard:nth-child(2),.ostats>*:nth-child(2){animation-delay:.05s}
+  .ocard:nth-child(3),.ostats>*:nth-child(3){animation-delay:.10s}
+  .ocard:nth-child(4),.ostats>*:nth-child(4){animation-delay:.15s}
+  .ocard{transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
+  .ocard:hover{transform:translateY(-2px)}
+  .sheet{animation:fadein .2s var(--ease) both}
+}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:.0}to{opacity:1}}
+.ocard{border:0;border-radius:12px;box-shadow:var(--sh-1);background:#fff}
+.ocard:hover{box-shadow:var(--sh-2)}
+
+/* queue rows: brand selection */
+#list .row.sel{background:var(--brand-bg);box-shadow:inset 3px 0 0 var(--brand)}
+.overview .eyebrow{color:var(--brand-ink)}
