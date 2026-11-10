@@ -63,7 +63,25 @@ Only behaviours were borrowed, rebuilt in plain JavaScript and CSS with no packa
 | Optimistic queue (Linear) | After the server records a decision, the row leaves the Open list at once and the full refresh follows. The decision itself is never shown as done before the server confirms it. | Feels instant without pretending. |
 | Press feedback and focus rings (design-engineering demos praised on X) | 80 ms press scale on buttons, a 2 px focus ring everywhere, all motion off under reduced motion. | Physical feedback without decoration. |
 
+| iPhone "slide to power off" recreation (justinbuilds reel), velocity projection from WWDC 2018 "Designing Fluid Interfaces" | The last step of a release is a slide: let go past 85 %, or flick so that distance plus 0.3 s of speed passes 85 %, and the frozen unit list is sent; otherwise it springs back and nothing is sent. Keyboard: End, then Enter (Enter before the end does nothing). Reduced motion: no spring, it snaps back. Never used on Accept. | Deliberate friction only where units leave quarantine. Checked: slow drag to 60 % springs back with nothing sent; a fast flick to 70 % commits; End+Enter sends exactly the confirmed unit. |
+| Endowed progress ("step 1 done") | Each case shows "Detected and held ✓ · Decide · Sign and confirm (release only) · Recorded". Step 1 is ticked because the hold really is in place before anyone looks. | Shows where the person is without inventing progress. |
+| Plain, specific writing (reel on writing in the age of AI) | Microcopy says what happens to units: "Accept hold · keep all 26 quarantined", "Release 1 unit; 1 stays quarantined", "Let go early and it springs back with nothing sent". | The words carry the safety rule. |
+
 Rejected after the same filter: View Transitions cross-fade (slowed opens from about 20 ms to about 130 ms), WebGPU shader effects (GPU load, distraction), React component kits (Animate UI, HorizonX, Bencho, Cue: runtime or unclear licence), and small anomaly-explanation models from Hugging Face (the reasons here come from the rules themselves, so a model would add a second, less checkable explanation).
+
+## Legal and trust checklist (from a "things so your app doesn't get sued" reel, where relevant)
+
+| Item | State |
+|---|---|
+| Text alternatives | Icons sit next to words and are hidden from screen readers; the chart has a text summary and a readings table. |
+| Contrast | Text pairs at least 4.5:1 (secondary grey darkened). |
+| Keyboard | Every action reachable; checked end to end. |
+| No dark patterns | Keeping a hold is the default and one step; the risky action is the one with friction; no pre-ticked units; Back is always offered. |
+| No unsupported claims | "Prototype, not a medical device" on every screen; thresholds called chosen settings; evaluation figures labelled as synthetic dataset-year results. |
+| Privacy note | "About and privacy" in the app: synthetic data, nothing collected, no analytics or cookies, what local storage holds. |
+| Licences | THIRD_PARTY.md lists every vendored part with version, licence and file hashes; licence texts ship with the app. |
+| Dependencies pinned | No CDN, package manager or auto-update; server is Python standard library only. |
+| NOT TESTED | Legal review of any kind. |
 
 ## Integration seams for parallel branches
 

@@ -15,7 +15,7 @@ ab eval "HOLDLINE.open('HL-HSP-007-2026102223-EXC');1"; sleep 1.5
 ab eval "{ const r=document.querySelector('#reason'); r.value='Manual probe read 4.1 C at 12:40; fridge door found ajar, closed by staff'; r.dispatchEvent(new Event('input')); const c=document.querySelector('.rel'); c.click(); document.querySelector('#second').value='demo.manager2'; document.querySelector('#second').dispatchEvent(new Event('change')); document.querySelector('#spin').value='3333'; document.querySelector('[data-act=CHANGE]').click(); } 1"; sleep 1
 ab eval "document.querySelector('#decide').scrollIntoView({block:'start'}); 1"; sleep .5; ab screenshot $O/${X}_4overlap_confirm.png
 # decided: confirm the release
-ab eval "document.querySelector('[data-act=send]').click(); 1"; sleep 2.5; ab eval "document.querySelector('#case').scrollTop=0; 1"; ab screenshot $O/${X}_5decided.png
+ab eval "{ const s=document.querySelector('#slider'); s.focus(); s.value=100; s.dispatchEvent(new Event('input')); s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})); } 1"; sleep 2.5; ab eval "document.querySelector('#case').scrollTop=0; 1"; ab screenshot $O/${X}_5decided.png
 # offline + uncached case
 ab set offline on; ab eval "HOLDLINE.open('HL-RBTC-KSM-2026052513-EXC');1"; sleep 1.5; ab screenshot $O/${X}_6offline.png; ab set offline off
 echo "$X done"

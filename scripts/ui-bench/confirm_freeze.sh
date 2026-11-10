@@ -13,7 +13,7 @@ echo "sentence: $(ev "document.querySelector('.confirm').textContent")"
 echo "boxes disabled: $(ev "[...document.querySelectorAll('.rel')].every(x=>x.disabled)")"
 ev "{ const b=document.querySelectorAll('.rel')[1]; b.disabled=false; b.checked=true; b.dispatchEvent(new Event('change',{bubbles:true})); } 1" >/dev/null
 echo "after forced tick, box 2 checked: $(ev "document.querySelectorAll('.rel')[1].checked") sentence: $(ev "document.querySelector('.confirm').textContent")"
-ev "{ document.querySelector('[data-act=send]').click(); } 1" >/dev/null; sleep 2
+ev "{ { const s=document.querySelector('#slider'); s.focus(); s.value=100; s.dispatchEvent(new Event('input')); s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})); } } 1" >/dev/null; sleep 2
 echo "sent: $(ev "JSON.stringify(window.__sent.map(b=>[b.unit_ids,b.confirmed_unit_ids]))")"
 T=$(echo $J | python3 -c "import json,sys;print(json.load(sys.stdin)['token'])")
 curl -s -H "X-Holdline-Token: $T" localhost:8802/api/case/$C | python3 -c "

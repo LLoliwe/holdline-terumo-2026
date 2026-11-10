@@ -98,7 +98,8 @@ async function summary() {
   const r = await api("/api/summary"); if (!r.data) return;
   state.summary = r.data; const s = r.data;
   $("#context").innerHTML = `<b>${fmt(s.cases.OPEN || 0)}</b> open holds · <b>${fmt(s.units_on_hold)}</b> units held · window since ${esc(s.dataset_since || "start")} · ` +
-    `audit chain <span class="${s.audit_ok ? "okw" : "badw"}">${s.audit_ok ? "intact" : "BROKEN at " + esc(s.audit_broken_at)}</span> · synthetic data · prototype, not a medical device`;
+    `audit chain <span class="${s.audit_ok ? "okw" : "badw"}">${s.audit_ok ? "intact" : "BROKEN at " + esc(s.audit_broken_at)}</span> · synthetic data · prototype, not a medical device · <button type="button" class="link" id="about-open">About and privacy</button>`;
+  const ab = $("#about-open"); if (ab) ab.onclick = () => $("#about").showModal();
   paintTabs();
   if (state.view === "evaluation") paintEvaluation();
 }
@@ -263,6 +264,19 @@ function evidence(d) {
 }
 function draft(id) { return state.drafts[id] || (state.drafts[id] = {reason: "", ticks: new Set(), second: "", confirm: null, frozen: null, ufilter: ""}); }
 
+// Review progress (endowed progress, truthfully): the hold is already in place when a case appears, so step 1 is done.
+function steps(d) {
+  const c = d.case, dr = draft(c.id), st = c.status;
+  if (st === "NO_UNITS") return "";
+  const decided = st !== "OPEN", released = st === "CHANGED" || st === "REJECTED";
+  const items = [
+    ["Detected and held", "done"],
+    ["Decide", decided || dr.confirm ? "done" : "now"],
+    [released || dr.confirm ? "Sign and confirm" : "Sign and confirm (release only)", released ? "done" : dr.confirm ? "now" : decided ? "skip" : "todo"],
+    [decided ? (st === "ACCEPTED" ? "Recorded: kept on hold" : "Recorded: released") : "Recorded", decided ? "done" : "todo"],
+  ];
+  return `<ol class="steps" aria-label="Review progress">${items.map(([k, s], i) => `<li class="${s}"${s === "now" ? ' aria-current="step"' : ""}><span class="dot" aria-hidden="true">${s === "done" ? "✓" : i + 1}</span>${esc(k)}<span class="sr-only">${s === "done" ? " (done)" : s === "now" ? " (current)" : s === "skip" ? " (not needed)" : ""}</span></li>`).join("")}</ol>`;
+}
 function renderCase(d) {
   const c = d.case, f = d.facility || {}, open = c.status === "OPEN", [cls, glyph, label] = KIND(c), e = evidence(d);
   const also = d.also_held || {}, alsoUnits = Object.keys(also);
@@ -273,12 +287,13 @@ function renderCase(d) {
   $("#case").innerHTML = `
   <div class="sheet" data-case="${esc(c.id)}">
    <header class="chead">${backBtn}${status}
+    <div id="steps-mount">${steps(d)}</div>
     <h1>${esc(f.name || c.facility_id)}</h1>
     <p class="why"><span class="g ${cls}">${glyph}</span> <b>${label}.</b> ${esc(c.reason)}.</p>
     <p class="meta"><span>${esc(ts(c.start))} → ${esc(ts(c.end))} EAT</span><span>${esc(f.county || "")}</span><span>${esc(f.connectivity || "")}</span><span>backup power: ${f.has_blood_fridge_backup_power === "True" ? "yes" : "no"}</span><span class="mono">${esc(c.id)}</span></p>
    </header>
    <dl class="facts" aria-label="Evidence summary">
-    <div><dt>Units held here</dt><dd>${fmt(d.units.length)}</dd></div>
+    <div><dt>${open ? "Units held here" : "Units in this case"}</dt><dd>${fmt(d.units.length)}</dd></div>
     <div><dt>Peak</dt><dd>${c.kind === "EXCURSION" && c.peak != null ? esc(c.peak) + "°C" : "unknown"}</dd></div>
     <div><dt>Readings above 6°C</dt><dd>${e.above} <small>of ${e.n}</small></dd></div>
     <div><dt>Hours with no reading</dt><dd class="${e.missing ? "unw" : ""}">${e.missing}</dd></div>
@@ -319,18 +334,24 @@ function decisionPanel(d, canRelease, alsoUnits, alsoCases) {
     const last = d.audit.filter(a => String(a.action).startsWith("DECISION")).slice(-1)[0];
     const held = d.units.filter(u => u.state !== "RELEASED").length;
     return `<h2>Decided: ${esc(c.status)}</h2>${last ? `<p><b>${esc(last.actor)}</b> (${esc(last.role)}) · ${esc(ts(last.ts))}</p><p class="quote">${esc(last.detail)}</p>` : ""}
-     <p>${fmt(n - held)} released · ${fmt(held)} stay quarantined.</p><p class="note">Read-only. A decided case cannot be changed here.</p>`;
+     <p>${fmt(n - held)} released · ${fmt(held)} ${held === 1 ? "stays" : "stay"} quarantined.</p><p class="note">Read-only. A decided case cannot be changed here.</p>`;
   }
   if (!me) return `<h2>Decide this hold</h2><p>Units stay on hold until a person decides.</p><button class="btn primary wide" type="button" data-act="signin">Sign in to decide</button>${rolesCard()}${queueNote(c.id)}`;
   const t = dr.ticks.size;
   if (dr.confirm) {  // friction: a release is summarised and confirmed before it is sent
     const rel = dr.frozen || [];
     return `<h2>Confirm release</h2>
-     <p class="confirm"><b>${dr.confirm === "REJECT" ? "Release all" : "Release"} ${fmt(rel.length)} unit${rel.length === 1 ? "" : "s"}</b>; ${fmt(n - rel.length)} stay quarantined.</p>
+     <p class="confirm"><b>${dr.confirm === "REJECT" ? "Release all" : "Release"} ${fmt(rel.length)} unit${rel.length === 1 ? "" : "s"}</b>; ${fmt(n - rel.length)} ${n - rel.length === 1 ? "stays" : "stay"} quarantined.</p>
      <p class="mono small">${rel.slice(0, 6).map(esc).join(", ")}${rel.length > 6 ? `, +${rel.length - 6} more` : ""}</p>
      <p>Second signer: <b>${esc(dr.second)}</b><br>Reason: ${esc(dr.reason)}</p>
      ${alsoUnits.some(u => rel.includes(u)) ? `<p class="xwarn">${alsoUnits.filter(u => rel.includes(u)).length} of these units are still ON_HOLD in another open case. Releasing here does not lift that hold.</p>` : ""}
-     <div class="row"><button class="btn danger" type="button" data-act="send">Confirm: release ${fmt(rel.length)}</button><button class="btn ghost" type="button" data-act="unconfirm">Back</button></div>
+     <div class="slide" id="slide">
+      <label for="slider" class="slab">Slide to release ${fmt(rel.length)} unit${rel.length === 1 ? "" : "s"}</label>
+      <input id="slider" type="range" min="0" max="100" step="1" value="0" aria-describedby="slidehint" aria-valuetext="Not released">
+      <span class="sfill" aria-hidden="true"></span>
+     </div>
+     <p id="slidehint" class="hint">Slide right to release. Let go early and it springs back with nothing sent. Keyboard: End, then Enter.</p>
+     <div class="row"><button class="btn ghost" type="button" data-act="unconfirm">Back</button></div>
      <p id="dmsg" class="err" role="alert"></p>${queueNote(c.id)}`;
   }
   return `<h2>Decide this hold</h2>
@@ -382,7 +403,6 @@ function wireCase(d) {
     if (act === "tickvis") { root.querySelectorAll("#ubody tr:not([hidden]) .rel").forEach(x => { x.checked = true; dr.ticks.add(x.value); }); return paintTicks(d); }
     if (act === "untick") { root.querySelectorAll(".rel").forEach(x => x.checked = false); dr.ticks.clear(); return paintTicks(d); }
     if (act === "unconfirm") { dr.confirm = null; dr.frozen = null; lockTicks(false); return repaintDecision(d); }
-    if (act === "send") return decide(d, dr.confirm);
     if (act === "ACCEPT") return decide(d, "ACCEPT");
     if (act === "CHANGE" || act === "REJECT") {
       if (!dr.reason || dr.reason.trim().length < 5) return msg("Write a reason first.");
@@ -410,7 +430,47 @@ function repaintDecision(d) {
   $("#decide").innerHTML = decisionPanel(d, d.case.status === "OPEN" && role() === "qualified_releaser", alsoUnits, alsoCases);
   const reason = $("#reason"), dr = draft(d.case.id); if (reason) reason.oninput = () => { dr.reason = reason.value; };
   const second = $("#second"); if (second) second.onchange = () => { dr.second = second.value; };
-  const f = $("#decide button"); if (f) f.focus();
+  wireSlide(d);
+  const sm = $("#steps-mount"); if (sm) sm.innerHTML = steps(d);
+  const f = $("#slider") || $("#decide button"); if (f) f.focus();
+}
+// Release friction (behaviour after an iPhone "slide to power off" recreation): the release is sent only when the
+// slider is let go past 85 % (or flicked towards it). Otherwise it springs back; nothing is sent. Keyboard: End, then Enter.
+// The slider only triggers decide(); the unit list sent is still the one frozen when this confirmation was drawn.
+function wireSlide(d) {
+  const r = $("#slider"), box = $("#slide"); if (!r) return;
+  const dr = draft(d.case.id), still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let sent = false, anim = 0, lastV = 0, lastT = 0, speed = 0;  // speed in percent per second
+  const paint = () => { box.style.setProperty("--p", r.value + "%"); r.setAttribute("aria-valuetext", +r.value >= 100 ? "At the end. Press Enter to release" : r.value + " percent, not released"); };
+  const springBack = () => {
+    cancelAnimationFrame(anim);
+    if (still) { r.value = 0; return paint(); }
+    let v = +r.value, vel = 0;  // critically damped-ish spring towards 0
+    const step = () => { vel = vel * 0.72 - v * 0.09; v = Math.max(0, v + vel); r.value = v; paint(); if (v > 0.5) anim = requestAnimationFrame(step); else { r.value = 0; paint(); } };
+    anim = requestAnimationFrame(step);
+  };
+  const fire = () => { if (sent || !dr.frozen) return; sent = true; r.disabled = true; box.classList.add("done"); decide(d, dr.confirm); };
+  r.addEventListener("input", () => {
+    cancelAnimationFrame(anim); const now = performance.now(), v = +r.value;
+    if (lastT && now > lastT) speed = 0.6 * speed + 0.4 * ((v - lastV) / ((now - lastT) / 1000));
+    lastV = v; lastT = now; paint();
+  });
+  r.addEventListener("pointerdown", () => { r.dataset.drag = "1"; speed = 0; lastT = 0; });
+  // Let go: commit if the projected end point (distance + 0.3 s of current speed, after "Designing Fluid Interfaces",
+  // WWDC 2018) reaches 85 %; a slow drag must reach 85 % itself. Otherwise spring back and send nothing.
+  const letGo = () => {
+    if (!r.dataset.drag) return; delete r.dataset.drag;
+    if (performance.now() - lastT > 100) speed = 0;  // finger stopped before letting go: no flick
+    const projected = +r.value + 0.3 * Math.max(0, speed);
+    if (projected >= 85) { r.value = 100; paint(); fire(); } else springBack();
+  };
+  r.addEventListener("pointerup", letGo); r.addEventListener("pointercancel", letGo); r.addEventListener("touchend", letGo);
+  r.addEventListener("keydown", ev => {
+    if (ev.key === "Enter") { ev.preventDefault(); if (+r.value >= 100) fire(); else $("#slidehint").textContent = "Move to the end first (End key), then press Enter."; }
+    if (ev.key === "Escape") { ev.stopPropagation(); r.value = 0; paint(); }
+  });
+  r.addEventListener("blur", () => { if (!sent && +r.value < 100) springBack(); });
+  paint();
 }
 function msg(m) { const e = $("#dmsg"); if (e) e.textContent = m; else toast(m, true); }
 
@@ -436,7 +496,7 @@ async function decide(d, kind) {
   delete state.drafts[c.id];
   // Optimistic for the queue only: the server already recorded the decision; the row leaves Open now, the full refresh follows.
   if (state.status === "OPEN") { state.rows = state.rows.filter(x => x.id !== c.id); paintList(); }
-  toast(kind === "ACCEPT" ? `Accepted. All ${fmt(d.units.length)} units stay quarantined.` : `${kind === "CHANGE" ? "Changed" : "Rejected"}. Decision recorded.`);
+  toast(kind === "ACCEPT" ? `Accepted. All ${fmt(d.units.length)} units stay quarantined.` : `Released ${fmt(body.unit_ids.length)} unit${body.unit_ids.length === 1 ? "" : "s"}. Recorded with both signatures.`);
   await refresh();
 }
 async function refresh() { await summary(); await loadList(); if (state.sel && state.view === "case") await openCase(state.sel); }
