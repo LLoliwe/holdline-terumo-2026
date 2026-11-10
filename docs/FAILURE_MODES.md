@@ -1,0 +1,23 @@
+# HOLDLINE failure modes (code as of commit 29315d0, 2026/11/10)
+
+Scope: the prototype as built, running locally on synthetic data. "Tested" names the automated test. A blank Test cell means the mode is handled in code but has no automated test.
+
+| # | What fails | How it's detected | Fallback | Human gate | Test |
+|---|---|---|---|---|---|
+| 1 | Sensor writes a glitch code (-99.0, 99.9, 0.0) | Value matches `glitch_values` in config | Reading ignored and logged as GLITCH; a glitch hour inside a hot run is bridged | Staff see GLITCH events; no hold from a glitch alone | test_glitch_values_ignored_not_alarmed, test_glitch_inside_hot_run_is_bridged |
+| 2 | Logger goes silent (power cut, battery, network) | Hourly gap of 3 h or more | Gap + no-backup power cut, or first reading after the gap above 6°C, counts as GAP_PRESUMED and holds units; other gaps are UNVERIFIED with no hold | Person decides on every hold | test_gap_with_unbacked_power_cut_is_presumed_hot, test_gap_with_backup_power_is_unverified_only, test_gap_ending_hot_is_presumed |
+| 3 | Real excursion missed (short spike, gap not tied to a recorded outage) | Not detectable by the rule: 326 of 7,112 exposed units missed in the synthetic year | Existing manual fridge-chart checks stay in place; UNVERIFIED gaps are shown to staff | Staff can't yet open a hold manually (gap, see Next) | End-to-end metrics test |
+| 4 | False hold (unit was fine) | Person checks the probe or backup fridge | Hold is the safe default; Change releases only the named units | Qualified releaser + reason + server-verified second qualified signer | test_change_releases_only_listed |
+| 5 | Unauthorised release (spoofed role in the request) | Server ignores actor/role in the body; identity from the session token only | Request refused (401 no session, 403 wrong role or second signer) | Release impossible without two qualified people | test_body_role_is_ignored, test_decide_without_session_refused, test_second_signer_pin_checked, test_second_signer_must_be_qualified, test_cannot_second_sign_yourself |
+| 6 | Same person signs twice | Server compares second signer with the session user | Refused | Second person required | test_release_needs_second_different_signer, test_cannot_second_sign_yourself |
+| 7 | Network drops while deciding | fetch fails | App shell from service worker, last data from device cache; Accept (keep on hold) is queued and replayed with a client_id | Releases are refused offline; units stay on hold until the server checks both signatures | test_offline_retry_is_idempotent (server side) |
+| 8 | Offline retry sent twice | Repeated client_id found in the audit log | Second copy ignored, never applied twice | none needed | test_offline_retry_is_idempotent |
+| 9 | Someone edits or deletes the audit log | SQLite triggers abort UPDATE/DELETE; `verify_chain` re-walks SHA-256 links | Header shows "BROKEN at row n" instead of "Intact" | Manager investigates | test_chain_valid_and_append_only, test_tamper_detected |
+| 10 | A case is decided twice (two staff at once) | Case status not OPEN; decisions take a server lock | Second decision refused | First decision stands; later changes need a new case (gap) | test_case_cannot_be_decided_twice |
+| 11 | No data connection at the site at all | Operator choice | SMS text under 160 characters, plain ASCII, built per hold | Reply codes are text only; no automated SMS handling | test_always_160_or_less |
+| 12 | Server restarts | Sessions are in memory | Everyone signs in again; queued Accepts stay on the device and resend after sign-in | none needed | |
+| 13 | Unit location wrong (missing receipt, late record) | Receipt missing: dispatch day used as arrival | Unit may be held at the wrong site for a day, or missed | Person checks the physical fridge | test_unconfirmed_receipt_uses_dispatch_day |
+| 14 | Server exposed on a network | Default bind 127.0.0.1 | Must set HOLDLINE_HOST on purpose; still demo log-in, no TLS | Not for real deployment | test_default_bind_is_localhost |
+| 15 | Demo PINs leak | They're public in the repo by design | None: synthetic demo users only | Replace with the site's identity system before any real use | |
+
+Limits stated plainly: demo log-in is not real authentication; SMS is simulated; data is synthetic; day-level residency; no manual "open a hold" button yet.
