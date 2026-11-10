@@ -1,11 +1,12 @@
 /* HOLDLINE theme "Night shift": a vivid dark theme after three publicly praised interfaces:
    Spotify (near-black #121212 surfaces, bold saturated accents, big rounded cards),
-   Revolut (deep dark with vivid blue/violet gradient cards and chunky numbers),
+   Revolut (deep dark, chunky numbers),
    Apple iOS dark mode (system colours #0A84FF #30D158 #FF453A #FF9F0A, SF-style type scale,
    translucent glass panels, spring motion). Rebuilt from scratch: no code, logos, fonts or images from them.
    Type: Inter variable (OFL, vendored) as the SF stand-in.
    Safety colours keep one meaning each: red = danger/hold, green = safe/released, orange = logger silent,
-   always with a shape and a word. Blue and violet are brand only. Text pairs checked at 4.5:1 or better. */
+   always with a shape and a word. Apple blue #0A84FF is the one brand and interactive accent. Flat, solid colour only:
+   no gradients, glows or violet (Lebo, 2026/11/10 20:46: these read as an "AI look"). Text pairs checked at 4.5:1 or better. */
 @font-face{font-family:"Inter";src:url("fonts/Inter-latin-wght.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 :root{
   color-scheme:dark;
@@ -17,7 +18,7 @@
   --in-range:#30D158; --in-range-bg:rgba(48,209,88,.15);
   --unverified:#FF9F0A; --unverified-bg:rgba(255,159,10,.16);
   --verified:#409CFF; --verified-bg:rgba(10,132,255,.18);
-  --brand:#0A84FF; --brand-2:#BF5AF2; --brand-3:#5E5CE6;
+  --brand:#0A84FF;
   --band-safe:rgba(48,209,88,.10);
   --held:#FFFFFF;
   --hover:rgba(255,255,255,.06); --sel:rgba(10,132,255,.16);
@@ -72,7 +73,7 @@ kbd{background:var(--surface-3);color:var(--ink-2);border-color:rgba(255,255,255
 .list .row{border:0;border-radius:12px;margin:2px 0;padding:12px 12px 12px 10px}
 .list .row:hover,.list .row.hi{background:var(--hover)}
 .list .row.hi{box-shadow:inset 0 0 0 1px var(--rule)}
-.list .row.sel{background:linear-gradient(90deg,rgba(10,132,255,.28),rgba(94,92,230,.14));box-shadow:inset 3px 0 0 var(--brand)}
+.list .row.sel{background:var(--sel);box-shadow:inset 3px 0 0 var(--brand)}
 .list .row .f{color:#fff}
 .list .row .u b{font-size:17px;font-weight:750;color:#fff}
 
@@ -110,9 +111,8 @@ tbody tr:hover{background:var(--hover)}
 td input[type=checkbox]{accent-color:#0A84FF}
 .st.ON_HOLD{background:#fff;color:#000}
 
-/* decision panel: glass with a vivid header glow */
+/* decision panel: solid surface */
 .decide{background:#1C1C1E;border:1px solid var(--rule);border-radius:24px;padding:24px;gap:14px;overflow:hidden;position:sticky}
-.decide::before{content:"";position:absolute;inset:-40% -20% auto -20%;height:180px;background:radial-gradient(50% 60% at 30% 50%,rgba(10,132,255,.30),transparent 70%),radial-gradient(40% 60% at 75% 40%,rgba(191,90,242,.26),transparent 70%);pointer-events:none;z-index:0}
 .decide>*{position:relative;z-index:1}
 .decide h2{font-size:22px;font-weight:750;letter-spacing:-.018em}
 .decide textarea,.decide input[type=password],.decide select{background:rgba(0,0,0,.35);color:#fff;border:1px solid var(--rule);border-radius:12px}
@@ -133,21 +133,19 @@ dialog{background:var(--surface-2);color:#fff;border:1px solid var(--rule);borde
 dialog::backdrop{background:rgba(0,0,0,.7)}
 .evaltable{background:var(--surface);border-color:var(--rule)}
 
-/* landing: Revolut-style vivid cards and chunky numbers */
+/* landing: solid dark cards, a coloured label with meaning, a big white numeral */
 .overview h1{font-size:44px;line-height:1.08;font-weight:800;letter-spacing:-.028em;color:#fff}
-.overview .eyebrow{color:#64D2FF;font-family:var(--sans);font-weight:700;letter-spacing:.06em}
+.overview .eyebrow{color:#409CFF;font-family:var(--sans);font-weight:700;letter-spacing:.06em}
 .overview .why,.overview .lede{color:var(--ink-2)}
 .ocards{gap:14px}
-.ocard{border:0;border-radius:24px;padding:20px 20px 18px;color:#fff;min-height:170px;box-shadow:0 20px 40px -20px rgba(0,0,0,.8)}
-.ocard:nth-child(1){background:linear-gradient(140deg,#0058D0 0%,#5E5CE6 100%)}
-.ocard:nth-child(2){background:linear-gradient(140deg,#5E5CE6 0%,#8E3FD8 100%)}
-.ocard:nth-child(3){background:linear-gradient(140deg,#E88A00 0%,#FFB340 100%)}
-.ocard:nth-child(4){background:linear-gradient(140deg,#8E1B5B 0%,#D6336C 100%)}
-.ocard .ok{color:rgba(255,255,255,.85);font-family:var(--sans);font-weight:700}
+.ocard{border:1px solid var(--rule-2);border-radius:24px;padding:20px 20px 18px;color:#fff;min-height:170px;background:#121212}
+.ocard:hover{background:#1C1C1E}
+.ocard .ok{color:#409CFF;font-family:var(--sans);font-weight:700}
+.ocard:nth-child(3) .ok{color:#FF9F0A}
+.ocard:nth-child(4) .ok{color:#FF6961}
 .ocard b{color:#fff;font-size:17px}
-.ocard .ov{font-family:var(--sans);font-size:30px;font-weight:800;letter-spacing:-.025em;color:#fff}
-.ocard .on{color:rgba(255,255,255,.85)}
-.ocard:nth-child(3) .ok,.ocard:nth-child(3) b,.ocard:nth-child(3) .ov,.ocard:nth-child(3) .on{color:#000}
+.ocard .ov{font-family:var(--sans);font-size:36px;font-weight:800;letter-spacing:-.025em;color:#fff}
+.ocard .on{color:var(--ink-3)}
 .ostats dt{color:var(--ink-3)}.ostats dd{color:#fff;font-family:var(--sans);font-size:28px;font-weight:800;letter-spacing:-.02em}
 .ostats{border-top-color:var(--rule)}
 .mfridge{background:var(--surface);border:0;border-radius:20px;padding:14px 16px 12px}
@@ -158,21 +156,17 @@ dialog::backdrop{background:rgba(0,0,0,.7)}
 
 /* spring motion; all off under reduced motion */
 @media (prefers-reduced-motion:no-preference){
-  .ocard{animation:rise .7s var(--spring) both}
-  .ocard:nth-child(2){animation-delay:.04s}
-  .ocard:nth-child(3){animation-delay:.08s}
-  .ocard:nth-child(4){animation-delay:.12s}
   .list .row,.facts div{transition:transform .45s var(--spring),background .15s}
   .list .row:hover{transform:translateX(2px)}
   .ocard{transition:transform .5s var(--spring)}
-  .ocard:hover{transform:translateY(-4px) scale(1.01)}
+  .ocard:hover{transform:translateY(-3px)}
 }
 @keyframes rise{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
 @media (forced-colors:active){.ocard{border:1px solid}}
 .chart .evl,.chart text.ev{fill:#FF6961}.roles summary{display:list-item}
 @media (max-width:760px){
-  html body .decidebar{background:rgba(0,102,204,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);color:#fff;border-radius:18px;border:0}
+  html body .decidebar{background:#0A84FF;color:#fff;border-radius:18px;border:0}
   html body .decidebar span,html body .decidebar small{color:rgba(255,255,255,.85)}
   html body .chead h1{font-size:28px;letter-spacing:-.018em}
   html body .facts dd{font-size:28px}
@@ -192,18 +186,17 @@ dialog::backdrop{background:rgba(0,0,0,.7)}
 .schip.gap{color:#FFB340;background:rgba(255,159,10,.15)}
 .dbar{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;max-width:140px}
 .dbar i{display:block;height:100%;border-radius:3px}
-.dbar.ex i{background:linear-gradient(90deg,#FF6961,#FF453A)}
-.dbar.hot i{background:linear-gradient(90deg,#FF453A,#FF2D55)}
+.dbar.ex i{background:#FF6961}
+.dbar.hot i{background:#FF453A}
 .dbar.gap i{background:repeating-linear-gradient(45deg,#FF9F0A 0 3px,rgba(255,159,10,.35) 3px 6px)}
 .dlab{font:600 11.5px var(--sans);color:var(--ink-3);font-variant-numeric:tabular-nums}
-.list .row.sel{background:linear-gradient(100deg,rgba(10,132,255,.38),rgba(94,92,230,.22) 60%,rgba(191,90,242,.12));box-shadow:inset 0 0 0 1px rgba(64,156,255,.55)}
+.list .row.sel{background:#1C2B40;box-shadow:inset 3px 0 0 #0A84FF}
 .list .row.sel .f{color:#fff}
 
-/* case hero: gradient status band and the peak as a big numeral */
+/* case hero: a solid status band and the peak as a big numeral */
 .chead{position:relative;padding:22px 24px 18px;border-radius:26px;overflow:hidden;background:#121212}
-.chead::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(80% 140% at 0% 0%,rgba(255,69,58,.30),transparent 60%),radial-gradient(60% 120% at 100% 0%,rgba(191,90,242,.22),transparent 60%)}
-.sheet:has(.kick.done) .chead::before{background:radial-gradient(80% 140% at 0% 0%,rgba(10,132,255,.30),transparent 60%),radial-gradient(60% 120% at 100% 0%,rgba(94,92,230,.22),transparent 60%)}
-.chead>*{position:relative;z-index:1}
+.chead{border-top:4px solid #FF453A}
+.sheet:has(.kick.done) .chead{border-top:4px solid #FF453A}
 .hero{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
 .hero h1{margin:14px 0 6px;flex:1 1 320px}
 .hpeak{display:grid;justify-items:end;line-height:1}
@@ -226,3 +219,5 @@ dialog::backdrop{background:rgba(0,0,0,.7)}
 :root{--chart-line:#FFFFFF;--chart-fill:#0A84FF}
 .chart .limline{stroke-dasharray:none;stroke-width:1.5}
 @media (max-width:760px){html body .hpv{font-size:44px}html body .hpv small{font-size:20px}html body .chead{padding:16px 16px 14px;border-radius:20px}}
+.ocard .ov{font-size:32px}.ocard:nth-child(1) .ov{font-size:22px;white-space:nowrap;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+@media (min-width:761px){html body .facts{grid-template-columns:repeat(4,minmax(0,1fr))}}

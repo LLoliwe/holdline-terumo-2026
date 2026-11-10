@@ -199,8 +199,12 @@ function setView(v) {
   state.view = v; document.body.dataset.view = v;
   $("#evaluation").hidden = v !== "evaluation";
   document.querySelectorAll(".views a").forEach(a => a.toggleAttribute("aria-current", a.dataset.view === (v === "evaluation" ? "evaluation" : "queue")));
+  const phone = layout() === "page", scrim = $("#sheet-scrim"), caseEl = $("#case");
+  if (scrim) scrim.hidden = !(phone && v === "case");
+  if (caseEl) { if (phone && v !== "case" && !caseEl.querySelector(".overview")) caseEl.setAttribute("aria-hidden", "true"); else caseEl.removeAttribute("aria-hidden"); }
   if (v === "evaluation") paintEvaluation();
 }
+const sheetScrim = $("#sheet-scrim"); if (sheetScrim) sheetScrim.onclick = () => { if (state.view === "case") back(); };
 window.addEventListener("hashchange", route);
 narrow.addEventListener("change", route);
 
@@ -295,7 +299,8 @@ function renderCase(d) {
   const canRelease = open && role() === "qualified_releaser";
   const status = open ? `<span class="kick hold">On hold · do not issue</span>` : c.status === "NO_UNITS" ? `<span class="kick info">Logged · no units in this fridge</span>` : `<span class="kick done">${esc(c.status)} · decided</span>`;
   const backBtn = layout() === "split" ? "" : `<button type="button" class="btn sm ghost backbtn" id="back">${icon("back")} Queue</button>`;
-  $("#case").innerHTML = `
+  const grab = layout() === "split" ? "" : `<button type="button" class="grabber" id="grabber" aria-label="Close case"><span></span></button>`;
+  $("#case").innerHTML = `${grab}
   <div class="sheet" data-case="${esc(c.id)}">
    <header class="chead">${backBtn}${status}
     <div id="steps-mount">${steps(d)}</div>
@@ -384,9 +389,33 @@ function queueNote(id) {
 }
 function paintQueueNote() { const n = $("#qnote"); if (n && state.data) n.outerHTML = queueNote(state.data.case.id); }
 
+// Phone unit cards (Grok 3, 90e8b1e): one unit at a time, swipe or Previous/Next; the table stays below.
+function shownUnits(d) {
+  const q = (draft(d.case.id).ufilter || "").trim().toLowerCase();
+  if (!q) return d.units;
+  return d.units.filter(u => (u.unit_id + " " + (u.blood_group || "") + " " + (u.component || "")).toLowerCase().includes(q));
+}
+function unitCards(d, canRelease) {
+  if (layout() !== "page") return "";
+  const units = shownUnits(d), n = units.length, dr = draft(d.case.id), also = d.also_held || {};
+  if (!n) return `<div class="ucards"><p class="note">No units match.</p></div>`;
+  const i = Math.max(0, Math.min(n - 1, dr.uidx || 0));
+  dr.uidx = i;
+  const u = units[i];
+  return `<div class="ucards"><p class="cap">Unit ${i + 1} of ${fmt(n)} · swipe</p>
+    <article class="ucard" id="ucard" tabindex="0" aria-label="Unit ${esc(u.unit_id)}">
+     <p class="uid">${esc(u.unit_id)}</p>
+     <p class="umeta">${esc(u.component)} · ${esc(u.blood_group)} · exp ${esc(u.expiry || u.expiry_date || "unknown")}</p>
+     <p><span class="st ${esc(u.state)}">${esc(u.state)}</span></p>
+     ${also[u.unit_id] ? `<p class="xwarn">Also on hold in another open case. Releasing here does not lift that hold.</p>` : ""}
+     ${canRelease ? `<label class="tickbig"><input type="checkbox" class="rel" value="${esc(u.unit_id)}" aria-label="Release ${esc(u.unit_id)}" ${dr.ticks.has(u.unit_id) ? "checked" : ""} ${dr.confirm ? "disabled" : ""}> Release this unit</label>` : `<p class="note">Stays on hold until a person decides.</p>`}
+    </article>
+    <div class="ucar-nav"><button type="button" class="btn" data-act="uprev" ${i === 0 ? "disabled" : ""}>Previous</button><span class="mono">${i + 1} / ${fmt(n)}</span><button type="button" class="btn" data-act="unext" ${i === n - 1 ? "disabled" : ""}>Next</button></div></div>`;
+}
 function unitsPanel(d, canRelease) {
   const n = d.units.length, also = d.also_held || {}, dr = draft(d.case.id);
   return `<h2 id="u-t">Units in this fridge that day <span>${fmt(n)}</span></h2>
+   ${unitCards(d, canRelease)}
    ${n > 12 ? `<div class="utools"><input id="ufilter" type="search" placeholder="Filter units: id, group, component" aria-label="Filter units" value="${esc(dr.ufilter)}">${canRelease ? `<button type="button" class="btn sm ghost" data-act="tickvis">Tick shown</button><button type="button" class="btn sm ghost" data-act="untick">Clear ticks</button>` : ""}</div>` : ""}
    <div class="twrap"><table><thead><tr>${canRelease ? `<th scope="col"><span class="sr">Release</span></th>` : ""}<th scope="col">Unit</th><th scope="col">Comp.</th><th scope="col">Group</th><th scope="col">Expiry</th><th scope="col">State</th></tr></thead>
    <tbody id="ubody">${d.units.map(u => `<tr data-u="${esc(u.unit_id)}" data-s="${esc((u.unit_id + " " + u.blood_group + " " + u.component).toLowerCase())}">${canRelease ? `<td class="c-sel"><input type="checkbox" class="rel" value="${esc(u.unit_id)}" aria-label="Release ${esc(u.unit_id)}" ${dr.ticks.has(u.unit_id) ? "checked" : ""}></td>` : ""}<td class="mono c-unit">${esc(u.unit_id)}${also[u.unit_id] ? `<br>${also[u.unit_id].map(x => `<a class="also" href="#/case/${encodeURIComponent(x.case_id)}">also held · ${esc(x.case_id.split("-").slice(-2).join("-"))}</a>`).join(" ")}` : ""}</td><td class="c-comp">${esc(u.component)}</td><td class="c-grp">${esc(u.blood_group)}</td><td class="mono nw c-exp">${esc(u.expiry || u.expiry_date || "")}</td><td class="c-st"><span class="st ${esc(u.state)}">${esc(u.state)}</span></td></tr>`).join("")}</tbody></table></div>`;
@@ -412,6 +441,13 @@ function wireCase(d) {
     if ((act === "tickvis" || act === "untick") && dr.confirm) return;
     if (act === "tickvis") { root.querySelectorAll("#ubody tr:not([hidden]) .rel").forEach(x => { x.checked = true; dr.ticks.add(x.value); }); return paintTicks(d); }
     if (act === "untick") { root.querySelectorAll(".rel").forEach(x => x.checked = false); dr.ticks.clear(); return paintTicks(d); }
+    if (act === "uprev" || act === "unext") {
+      const units = shownUnits(d);
+      dr.uidx = Math.max(0, Math.min(Math.max(0, units.length - 1), (dr.uidx || 0) + (act === "unext" ? 1 : -1)));
+      const box = root.querySelector(".ucards");
+      if (box) box.outerHTML = unitCards(d, d.case.status === "OPEN" && role() === "qualified_releaser");
+      bindCard(d); return;
+    }
     if (act === "unconfirm") { dr.confirm = null; dr.frozen = null; lockTicks(false); return repaintDecision(d); }
     if (act === "ACCEPT") return decide(d, "ACCEPT");
     if (act === "CHANGE" || act === "REJECT") {
@@ -426,7 +462,34 @@ function wireCase(d) {
   wireChart(d);
   if (dr.confirm) lockTicks(true);
   // Phones (behaviour after Vaul-style bottom sheets, kept simple): a thumb-reach bar that brings the decision into view.
-  const bar = $("#decidebar"); if (bar) bar.onclick = () => { const p = $("#decide"); p.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"}); const f = p.querySelector("textarea, button"); if (f) f.focus({preventScroll: true}); };
+  const bar = $("#decidebar");
+  if (bar && layout() === "page" && bar.parentElement !== $("#case")) $("#case").appendChild(bar);  // phone: pinned at the sheet foot
+  if (bar) bar.onclick = () => { const p = $("#decide"); p.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"}); const f = p.querySelector("textarea, button"); if (f) f.focus({preventScroll: true}); };
+  $("#case").dataset.confirming = dr.confirm ? "1" : "";
+  bindGrabber(); bindCard(d);
+}
+// Phone sheet grabber (Grok 3): drag down past 110 px, or tap, to close. Closing never decides anything.
+function bindGrabber() {
+  const g = $("#grabber"), root = $("#case");
+  if (!g || g.dataset.bound) return;
+  g.dataset.bound = "1";
+  let y0 = null, pulled = 0, dragged = false;
+  g.addEventListener("pointerdown", e => { y0 = e.clientY; pulled = 0; dragged = false; try { g.setPointerCapture(e.pointerId); } catch (err) {} });
+  g.addEventListener("pointermove", e => { if (y0 == null) return; pulled = Math.max(0, e.clientY - y0); if (pulled > 8) dragged = true; root.style.setProperty("--sheet-pull", pulled + "px"); });
+  g.addEventListener("pointerup", () => { const close = pulled > 110 || !dragged; y0 = null; pulled = 0; dragged = false; root.style.removeProperty("--sheet-pull"); if (close) back(); });
+}
+function bindCard(d) {
+  const card = $("#ucard"), root = $("#case");
+  if (!card || card.dataset.bound) return;
+  card.dataset.bound = "1";
+  let x0 = null;
+  const go = dir => { const b = root.querySelector(`[data-act="${dir}"]`); if (b && !b.disabled) b.click(); };
+  card.addEventListener("pointerdown", e => { x0 = e.clientX; });
+  card.addEventListener("pointerup", e => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) < 48) return; go(dx < 0 ? "unext" : "uprev"); });
+  card.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight") { e.preventDefault(); go("unext"); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); go("uprev"); }
+  });
 }
 // While a release confirmation is on screen the tick boxes are locked, so the list cannot drift from the sentence.
 function lockTicks(on) { document.querySelectorAll("#case .rel, #case [data-act=tickvis], #case [data-act=untick]").forEach(x => { x.disabled = on; }); }
@@ -440,6 +503,7 @@ function repaintDecision(d) {
   $("#decide").innerHTML = decisionPanel(d, d.case.status === "OPEN" && role() === "qualified_releaser", alsoUnits, alsoCases);
   const reason = $("#reason"), dr = draft(d.case.id); if (reason) reason.oninput = () => { dr.reason = reason.value; };
   const second = $("#second"); if (second) second.onchange = () => { dr.second = second.value; };
+  const root = $("#case"); if (root) root.dataset.confirming = draft(d.case.id).confirm ? "1" : "";
   wireSlide(d);
   const sm = $("#steps-mount"); if (sm) sm.innerHTML = steps(d);
   const f = $("#slider") || $("#decide button"); if (f) f.focus();

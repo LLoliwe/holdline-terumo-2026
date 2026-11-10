@@ -17,7 +17,7 @@ html,body,main,.case{display:block!important;height:auto!important;overflow:visi
 .panel,.decide{border:1px solid #000!important;border-radius:0!important;padding:6pt!important;margin:6pt 0;position:static!important;break-inside:avoid}
 .decide form,.decide textarea,.decide button,.decide select,.decide input{display:none!important}
 .chart svg{max-height:60mm}
-.chart path[fill="url(#fillg)"],.chart .exglow{display:none}
+.chart path[fill="var(--chart-fill)"],.chart .exglow{display:none}
 .chart path{stroke:#000!important}
 .twrap{max-height:none!important;overflow:visible!important;border:0!important}
 table{font-size:8pt}

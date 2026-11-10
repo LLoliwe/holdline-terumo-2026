@@ -158,5 +158,31 @@ class Hard(unittest.TestCase):
                 try: server.main()
                 finally: sys.argv = a
         finally: del os.environ["HOLDLINE_HOST"]
+
+class PhoneShell(unittest.TestCase):
+    """Phone sheet (Grok 3, 90e8b1e) is presentation. The release still has to be confirmed, and an accept still sends no units."""
+    @classmethod
+    def setUpClass(cls):
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        def read(name):
+            with open(os.path.join(root, "holdline", "static", name), encoding="utf-8") as f:
+                return f.read()
+        cls.js, cls.css, cls.sw = read("app.js"), read("phone.css"), read("sw.js")
+    def test_one_unit_stays_and_the_peak_is_on_the_queue_row(self):
+        self.assertIn('=== 1 ? "stays" : "stay"', self.js)
+        self.assertIn("Peak ${", self.js)
+    def test_phone_sheet_slide_and_cache(self):
+        self.assertIn('class="grabber"', self.js)
+        self.assertIn('class="ucards"', self.js)
+        self.assertIn('id="slider"', self.js)
+        self.assertIn("projected >= 85", self.js)
+        self.assertIn("prefers-reduced-motion: reduce", self.css)
+        self.assertIn("translateY", self.css)
+        self.assertIn("[data-view=case] .case", self.css)
+        self.assertIn("calc(14px + env(safe-area-inset-bottom))", self.css)
+        self.assertIn('const C = "holdline-v', self.sw)
+        accept = self.js.split('if (kind === "ACCEPT")', 1)[1][:180]
+        self.assertIn("body.unit_ids = []", accept)
+        self.assertIn("body.second_signer = null", accept)
 if __name__ == "__main__": unittest.main()
 
