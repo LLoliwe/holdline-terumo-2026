@@ -1,0 +1,41 @@
+/* HOLDLINE phone and narrow-screen rules (760 px and below). Seam for parallel work: phone layout lives here,
+   loaded after app.css so it wins at equal specificity. */
+@media (max-width:760px){
+ .brand .sub,.views a[data-view=evaluation]{display:none}
+ .bar{gap:10px;padding:0 10px}
+ .views{margin-left:0}
+ .context{font-size:11px;padding:0 10px}
+ main{height:calc(100vh - var(--bar) - var(--ctx))}
+ .sheet{padding:14px 12px 40px;gap:12px}
+ .chead h1{font-size:20px}
+ .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .facts div{border-left:0;border-top:1px solid var(--rule-2)}
+ .facts div:nth-child(-n+2){border-top:0}
+ .facts div:nth-child(even){border-left:1px solid var(--rule-2)}
+ .facts dd{font-size:17px}
+ .seg button{font-size:11px}
+ .twrap{max-height:none}
+ .who span,.who b{display:none}
+ .bar .btn.sm{padding:5px 8px}
+ .context{white-space:nowrap}
+}
+@media (max-width:380px){#help-open{display:none}.brand b{font-size:14px}}
+@media (max-width:760px){.overview{padding:20px 14px}.overview h1{font-size:22px}}
+@media (max-width:760px){
+ .unitsp thead{display:none}
+ .unitsp tbody tr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"sel unit st" "sel meta meta";gap:2px 10px;padding:9px 10px;border-bottom:1px solid var(--rule-2)}
+ .unitsp td{border:0;padding:0}
+ .unitsp .c-sel{grid-area:sel;padding-top:2px}
+ .unitsp .c-unit{grid-area:unit;white-space:normal}
+ .unitsp .c-st{grid-area:st}
+ .unitsp .c-comp,.unitsp .c-grp,.unitsp .c-exp{grid-row:2;font-size:12px;color:var(--ink-3)}
+ .unitsp .c-comp{grid-column:2;justify-self:start}
+ .unitsp .c-grp{grid-column:2;justify-self:center}
+ .unitsp .c-exp{grid-column:2/4;justify-self:end}
+ .chart .ax{font-size:17px}.chart .gapt{font-size:18px}
+}
+@media (max-width:760px){
+ .cmdbtn{display:none}
+ .decidebar{display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:10px;margin:12px 0 0;width:100%;padding:14px 16px;border:0;border-radius:10px;background:var(--ink);color:#fff;font:600 15px var(--sans);box-shadow:0 10px 26px rgba(17,17,22,.25);z-index:5;grid-column:1/-1;order:99}
+ .decidebar span{font:12px var(--mono);color:#C9CED3}
+}

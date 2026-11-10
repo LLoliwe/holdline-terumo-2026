@@ -160,6 +160,7 @@ document.querySelectorAll(".fchip").forEach(b => b.onclick = () => {
   const f = b.dataset.f, on = !state.kinds.has(f); on ? state.kinds.add(f) : state.kinds.delete(f);
   b.setAttribute("aria-pressed", on); state.hi = -1; paintList(); saveFilters();
 });
+function setKinds(ks) { state.kinds.clear(); ks.forEach(k => state.kinds.add(k)); document.querySelectorAll(".fchip").forEach(b => b.setAttribute("aria-pressed", state.kinds.has(b.dataset.f))); saveFilters(); paintList(); }
 function saveFilters() { localStorage.setItem("hl.filters", JSON.stringify({kinds: [...state.kinds], sort: state.sort})); }
 function loadFilters() {
   try { const f = JSON.parse(localStorage.getItem("hl.filters") || "{}"); (f.kinds || []).forEach(k => state.kinds.add(k)); if (f.sort) state.sort = f.sort; } catch (e) {}
@@ -272,8 +273,9 @@ function renderCase(d) {
     <div><dt>Also held elsewhere</dt><dd class="${alsoUnits.length ? "exw" : ""}">${alsoUnits.length ? `${alsoUnits.length} unit${alsoUnits.length > 1 ? "s" : ""}` : "none"}</dd></div>
    </dl>
    <aside class="decide" aria-label="Decision" id="decide">${decisionPanel(d, canRelease, alsoUnits, alsoCases)}</aside>
+   ${open ? `<button type="button" class="decidebar" id="decidebar">Decide this hold <span>${fmt(d.units.length)} units on hold</span></button>` : ""}
    <section class="panel chartp" aria-labelledby="ch-t"><h2 id="ch-t">Fridge temperature · 24 h either side</h2>
-    ${chart(d.readings, c.start, c.end, c.kind)}
+    <div id="chart-mount">${chart(d.readings, c.start, c.end, c.kind)}</div>
     <p class="note">Green band 2 to 6°C. Shaded area is the event window. Gaps in the line are hours with no reading. Focus the chart and use ← / → to read each hour.</p>
     <details class="rtable"><summary>Readings as a table (${d.readings.length})</summary>${readingsTable(d.readings, c)}</details>
    </section>
@@ -381,6 +383,8 @@ function wireCase(d) {
   };
   wireChart(d);
   if (dr.confirm) lockTicks(true);
+  // Phones (behaviour after Vaul-style bottom sheets, kept simple): a thumb-reach bar that brings the decision into view.
+  const bar = $("#decidebar"); if (bar) bar.onclick = () => { const p = $("#decide"); p.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"}); const f = p.querySelector("textarea, button"); if (f) f.focus({preventScroll: true}); };
 }
 // While a release confirmation is on screen the tick boxes are locked, so the list cannot drift from the sentence.
 function lockTicks(on) { document.querySelectorAll("#case .rel, #case [data-act=tickvis], #case [data-act=untick]").forEach(x => { x.disabled = on; }); }
@@ -423,78 +427,6 @@ async function decide(d, kind) {
 }
 async function refresh() { await summary(); await loadList(); if (state.sel && state.view === "case") await openCase(state.sel); }
 
-// ── chart: inline SVG, keyboard cursor, text summary, table alternative (no canvas) ──────────────
-let chartGeom = null;
-const hm = t => { const d = new Date(t), p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:00`; };
-function chart(rs, start, end, kind) {
-  if (!rs.length) return `<p class="empty">No readings in this window: the logger was silent.</p>`;
-  const W = 640, H = 240, L = 34, R = 10, T = 18, B = 38;
-  const tt = rs.map(r => new Date(r[0].replace(" ", "T")).getTime());
-  // Fixed 48 h axis around the event start, so a silent logger shows as empty, hatched time, not a shorter line.
-  const st = new Date(start).getTime(), t0 = Math.min(st - 24 * 36e5, ...tt), t1 = Math.max(st + 24 * 36e5, ...tt), vs = rs.map(r => r[1]).filter(v => v > -50 && v < 60);
-  const lo = Math.min(0, ...vs), hi = Math.max(12, ...vs);
-  const x = t => L + (t - t0) / Math.max(1, t1 - t0) * (W - L - R), y = v => H - B - (v - lo) / (hi - lo) * (H - T - B);
-  let d = "", prev = null, dots = "";
-  rs.forEach((r, i) => { const t = tt[i]; if (r[1] < -50 || r[1] > 60) return;
-    d += (prev && t - prev > 36e5 * 1.5 ? "M" : (d ? "L" : "M")) + x(t).toFixed(1) + " " + y(r[1]).toFixed(1);
-    if (r[1] > 6) dots += `<path d="M${x(t).toFixed(1)} ${(y(r[1]) - 4).toFixed(1)}l4 7h-8z" fill="var(--excursion)"/>`;
-    prev = t; });
-  let gaps = "";  // hatched columns where an hourly reading is missing
-  const edges = [t0 - 36e5, ...tt, t1 + 36e5];  // include silence before the first and after the last reading
-  for (let i = 1; i < edges.length; i++) if (edges[i] - edges[i - 1] > 36e5 * 1.5) {
-    const a = x(Math.max(t0, edges[i - 1])), w = Math.max(0, x(Math.min(t1, edges[i])) - a), hrs = Math.round((edges[i] - edges[i - 1]) / 36e5) - 1;
-    gaps += `<rect x="${a.toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H - T - B}" fill="url(#hatch)"/>`;
-    if (w > 90) gaps += `<text x="${(a + w / 2).toFixed(1)}" y="${(T + 22).toFixed(1)}" text-anchor="middle" class="ax gapt">no readings · ${hrs} h</text>`;
-  }
-  const sx = x(new Date(start).getTime()), ex = x(new Date(end).getTime());
-  let grid = "";
-  for (let v = Math.ceil(lo / 2) * 2; v <= hi; v += 2) grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule-2)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" class="ax">${v}</text>`;
-  for (let t = Math.ceil(t0 / (6 * 36e5)) * 6 * 36e5; t <= t1; t += 6 * 36e5) grid += `<line x1="${x(t)}" x2="${x(t)}" y1="${H - B}" y2="${H - B + 4}" stroke="var(--rule)"/><text x="${x(t)}" y="${H - B + 15}" text-anchor="middle" class="ax">${String(new Date(t).getHours()).padStart(2, "0")}:00</text>`;
-  chartGeom = {tt, rs, x, y, H, T, B};
-  const pk = vs.length ? Math.max(...vs) : null;
-  const sum = `${rs.length} of 49 hourly readings present from ${ts(rs[0][0])} to ${ts(rs[rs.length - 1][0])}. ${vs.filter(v => v > 6).length} above 6°C${pk != null ? `, highest ${pk}°C` : ""}. Event window ${ts(start)} to ${ts(end)}.`;
-  return `<figure class="chart"><svg viewBox="0 0 ${W} ${H}" tabindex="0" role="img" aria-label="${esc(sum)}" id="chartsvg">
-   <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--unverified)" stroke-width="1.2" opacity=".45"/></pattern></defs>
-   ${grid}<rect x="${L}" y="${y(6)}" width="${W - L - R}" height="${y(2) - y(6)}" fill="var(--band-safe)"/>
-   <line x1="${L}" x2="${W - R}" y1="${y(6)}" y2="${y(6)}" stroke="var(--excursion)" stroke-width="1.5" stroke-dasharray="6 4"/>
-   <text x="${W - R}" y="${y(6) - 5}" text-anchor="end" class="ax lim">6°C limit</text>
-   <rect x="${Math.min(sx, ex)}" y="${T}" width="${Math.max(2, Math.abs(ex - sx))}" height="${H - T - B}" fill="var(--excursion-bg)" opacity=".6"/>
-   ${gaps}<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="2"/>${dots}
-   <g id="cur" visibility="hidden"><line id="curl" y1="${T}" y2="${H - B}" stroke="var(--verified)" stroke-width="1.5"/><circle id="curc" r="4.5" fill="var(--verified)"/><text id="curt" class="ax curt" y="${T + 10}"></text></g>
-   <text x="${L}" y="${H - 4}" class="ax">${esc(hm(t0).slice(0, 10))}</text><text x="${x(st)}" y="${T - 4}" text-anchor="middle" class="ax ev">event start ${esc(hm(st).slice(11))}</text><text x="${W - R}" y="${H - 4}" text-anchor="end" class="ax">${esc(hm(t1).slice(0, 10))}</text><text x="${L - 6}" y="${T - 4}" text-anchor="end" class="ax">°C</text></svg>
-   <figcaption class="sr" id="chartsum">${esc(sum)}</figcaption><p class="curread" id="curread" aria-live="polite"></p></figure>`;
-}
-function wireChart() {
-  const svg = $("#chartsvg"); if (!svg || !chartGeom) return;
-  const g = chartGeom, show = i => {
-    i = Math.max(0, Math.min(g.rs.length - 1, i)); state.cursor = i;
-    const r = g.rs[i], X = g.x(g.tt[i]), ok = r[1] > -50 && r[1] < 60;
-    $("#cur").setAttribute("visibility", "visible"); $("#curl").setAttribute("x1", X); $("#curl").setAttribute("x2", X);
-    $("#curc").setAttribute("cx", X); $("#curc").setAttribute("cy", ok ? g.y(r[1]) : g.H - g.B);
-    const t = $("#curt"); t.textContent = `${r[0].slice(11)} · ${ok ? r[1] + "°C" : "invalid"}`; t.setAttribute("x", X + (X > 480 ? -8 : 8)); t.setAttribute("text-anchor", X > 480 ? "end" : "start");
-    const gap = i > 0 && g.tt[i] - g.tt[i - 1] > 36e5 * 1.5 ? ` · ${Math.round((g.tt[i] - g.tt[i - 1]) / 36e5) - 1} h with no reading before this` : "";
-    $("#curread").textContent = `${r[0]} · ${ok ? r[1] + "°C" : "invalid reading"}${ok && r[1] > 6 ? " · above 6°C" : ""}${gap}`;
-  };
-  svg.addEventListener("keydown", ev => {
-    const k = ev.key; let i = state.cursor < 0 ? 0 : state.cursor;
-    if (k === "ArrowRight") i++; else if (k === "ArrowLeft") i--; else if (k === "Home") i = 0; else if (k === "End") i = g.rs.length - 1; else return;
-    ev.preventDefault(); show(i);
-  });
-  svg.addEventListener("pointermove", ev => {
-    const b = svg.getBoundingClientRect(), vx = (ev.clientX - b.left) / b.width * 640;
-    let best = 0, bd = 1e9; g.tt.forEach((t, i) => { const dd = Math.abs(g.x(t) - vx); if (dd < bd) { bd = dd; best = i; } }); show(best);
-  });
-  state.cursor = -1;
-}
-function readingsTable(rs, c) {
-  return `<div class="twrap short"><table><thead><tr><th scope="col">Hour (EAT)</th><th scope="col">°C</th><th scope="col">Note</th></tr></thead><tbody>${rs.map((r, i) => {
-    const prev = i ? new Date(rs[i - 1][0].replace(" ", "T")) : null, t = new Date(r[0].replace(" ", "T"));
-    const gap = prev && t - prev > 36e5 * 1.5 ? `${Math.round((t - prev) / 36e5) - 1} h missing before` : "";
-    const inW = r[0] >= ts(c.start) && r[0] <= ts(c.end);
-    return `<tr${r[1] > 6 ? ' class="hot"' : ""}><td class="mono">${esc(r[0])}</td><td class="mono">${esc(r[1])}</td><td>${[r[1] > 6 ? "above 6°C" : "", inW ? "event window" : "", gap].filter(Boolean).join(" · ")}</td></tr>`;
-  }).join("")}</tbody></table></div>`;
-}
-
 // ── evaluation view: dataset-year metrics, labelled as such ──────────────────────────────────────
 const pct = x => (x * 100).toFixed(1) + "%";
 function paintEvaluation() {
@@ -516,6 +448,7 @@ function paintEvaluation() {
 // ── keyboard ─────────────────────────────────────────────────────────────────────────────────────
 document.addEventListener("keydown", ev => {
   const t = ev.target, typing = /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable;
+  if ((ev.metaKey || ev.ctrlKey) && ev.key.toLowerCase() === "k") { ev.preventDefault(); cmdOpen(); return; }
   if (document.querySelector("dialog[open]")) return;
   if (ev.key === "Escape") {
     if (t.id === "q" && t.value) { t.value = ""; state.q = ""; paintList(); return; }
@@ -541,14 +474,73 @@ document.addEventListener("keydown", ev => {
 });
 $("#help-open").onclick = () => $("#help").showModal();
 
-let toastT;
-function toast(m, bad) { const e = $("#toast"); e.textContent = m; e.className = "toast show" + (bad ? " bad" : ""); clearTimeout(toastT); toastT = setTimeout(() => e.className = "toast", 5000); }
+// Toasts (behaviour after Sonner): stacked at the bottom, newest on top, pause while hovered or focused,
+// close button, at most three. Errors are announced assertively, confirmations politely.
+function toast(m, bad) {
+  const box = $("#toasts"), t = document.createElement("div");
+  t.className = "toast" + (bad ? " bad" : ""); t.setAttribute("role", bad ? "alert" : "status");
+  t.innerHTML = `<span class="tm"></span><button type="button" class="tx" aria-label="Dismiss">×</button>`;
+  t.querySelector(".tm").textContent = m;
+  let left = bad ? 8000 : 5000, t0 = Date.now(), timer;
+  const go = () => { t0 = Date.now(); timer = setTimeout(close, left); }, hold = () => { clearTimeout(timer); left -= Date.now() - t0; };
+  function close() { clearTimeout(timer); t.classList.add("out"); setTimeout(() => t.remove(), 160); }
+  t.querySelector(".tx").onclick = close;
+  t.addEventListener("mouseenter", hold); t.addEventListener("mouseleave", go); t.addEventListener("focusin", hold); t.addEventListener("focusout", go);
+  box.prepend(t); while (box.children.length > 3) box.lastChild.remove();
+  requestAnimationFrame(() => t.classList.add("in")); go();
+}
+
+// Command menu (behaviour after cmdk / Linear / Raycast): Ctrl+K or Cmd+K, type to jump to any hold or run an action.
+function fuzzy(q, text) {  // subsequence match; contiguous and word-start hits score higher
+  if (!q) return 1; let i = 0, sc = 0, run = 0; text = text.toLowerCase();
+  for (let j = 0; j < text.length && i < q.length; j++) if (text[j] === q[i]) { i++; run++; sc += run * 2 + (j === 0 || " -·".includes(text[j - 1]) ? 3 : 0); } else run = 0;
+  return i === q.length ? sc : 0;
+}
+const cmd = {items: [], hi: 0};
+function cmdActions() {
+  const a = [
+    {k: "Go to holds", run: () => { location.hash = "#/"; }},
+    {k: "Go to evaluation", run: () => { location.hash = "#/evaluation"; }},
+    {k: "Show measured excursions only", run: () => setKinds(["EXCURSION"])},
+    {k: "Show presumed (logger gap) only", run: () => setKinds(["GAP"])},
+    {k: "Show every hold in this tab", run: () => { state.q = ""; $("#q").value = ""; setKinds([]); }},
+    me ? {k: "Sign out", run: () => $("#out") && $("#out").click()} : {k: "Sign in", run: openSignin},
+    {k: "Keyboard shortcuts", run: () => $("#help").showModal()},
+  ];
+  return a.map(x => ({...x, group: "Actions"}));
+}
+function cmdPaint() {
+  const q = $("#cmdq").value.trim().toLowerCase();
+  const cases = (state.rows || []).map(c => ({c, s: fuzzy(q, `${c.facility_name || ""} ${c.facility_county || ""} ${c.id}`)})).filter(x => x.s).sort((a, b) => b.s - a.s).slice(0, 8)
+    .map(({c}) => ({group: "Holds", k: c.facility_name || c.facility_id, sub: `${fmt(c.n)} units · ${c.kind === "EXCURSION" ? "Measured" : "Presumed"} · ${ts(c.start)}`, run: () => go(c.id)}));
+  const acts = cmdActions().filter(a => fuzzy(q, a.k));
+  cmd.items = q ? [...cases, ...acts] : [...acts, ...cases]; cmd.hi = Math.min(cmd.hi, Math.max(0, cmd.items.length - 1));
+  let g = "";
+  $("#cmdlist").innerHTML = cmd.items.length ? cmd.items.map((it, i) => (it.group !== g ? `<li class="cg" role="presentation">${(g = it.group)}</li>` : "") +
+    `<li role="option" id="cmd-${i}" data-i="${i}" aria-selected="${i === cmd.hi}">${esc(it.k)}${it.sub ? `<span>${esc(it.sub)}</span>` : ""}</li>`).join("") : `<li class="cg">No match</li>`;
+  $("#cmdq").setAttribute("aria-activedescendant", cmd.items.length ? "cmd-" + cmd.hi : "");
+  const el = $("#cmd-" + cmd.hi); if (el) el.scrollIntoView({block: "nearest"});
+}
+function cmdOpen() { const d = $("#cmd"); if (d.open) return; $("#cmdq").value = ""; cmd.hi = 0; cmdPaint(); d.showModal(); $("#cmdq").focus(); }
+function cmdRun(i) { const it = cmd.items[i]; if (!it) return; $("#cmd").close(); it.run(); }
+function wireCmd() {
+  const q = $("#cmdq"), l = $("#cmdlist"), d = $("#cmd");
+  q.oninput = () => { cmd.hi = 0; cmdPaint(); };
+  q.onkeydown = ev => {
+    if (ev.key === "ArrowDown") { ev.preventDefault(); cmd.hi = Math.min(cmd.items.length - 1, cmd.hi + 1); cmdPaint(); }
+    else if (ev.key === "ArrowUp") { ev.preventDefault(); cmd.hi = Math.max(0, cmd.hi - 1); cmdPaint(); }
+    else if (ev.key === "Enter") { ev.preventDefault(); cmdRun(cmd.hi); }
+  };
+  l.onclick = ev => { const o = ev.target.closest("[data-i]"); if (o) cmdRun(+o.dataset.i); };
+  d.addEventListener("click", ev => { if (ev.target === d) d.close(); });
+  const b = $("#cmd-open"); if (b) b.onclick = cmdOpen;
+}
 
 // ── start ────────────────────────────────────────────────────────────────────────────────────────
 (async () => {
   const lq = new URLSearchParams(location.search).get("layout"); if (LAYOUTS.includes(lq)) localStorage.setItem("hl.layout", lq);
   document.body.dataset.layout = layout();
-  loadFilters(); paintWho(); paintNet(); paintTabs();
+  loadFilters(); paintWho(); paintNet(); paintTabs(); wireCmd();
   await summary();
   const m = location.hash.match(/^#\/case\/(.+)$/) || location.hash.match(/^#(HL-[\w-]+)$/);
   if (m) {  // deep link: show the case's own status list

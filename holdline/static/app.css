@@ -180,9 +180,6 @@ dialog .row{margin-top:14px}
 .hint{font-size:12px;color:var(--ink-3)}
 .keys{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:10px 0 16px;font-size:13px}
 .keys dt{font:600 12px var(--mono)}
-.toast{position:fixed;left:50%;bottom:20px;transform:translate(-50%,20px);opacity:0;background:var(--ink);color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;max-width:min(560px,calc(100% - 32px));transition:opacity .15s,transform .15s;pointer-events:none;z-index:40}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.toast.bad{background:var(--excursion)}
 .upd-banner{position:fixed;left:16px;bottom:16px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:6px;display:flex;gap:10px;align-items:center;z-index:45}
 .upd-banner button{background:#fff;color:var(--ink);border:0;border-radius:4px;padding:5px 10px;font-weight:600}
 
@@ -205,28 +202,10 @@ body[data-layout=page] .queue{max-width:none}
  .facts div:nth-child(4){border-left:0}
  .facts div:nth-child(n+4){border-top:1px solid var(--rule-2)}
 }
-@media (max-width:760px){
- .brand .sub,.views a[data-view=evaluation]{display:none}
- .bar{gap:10px;padding:0 10px}
- .views{margin-left:0}
- .context{font-size:11px;padding:0 10px}
- main{height:calc(100vh - var(--bar) - var(--ctx))}
- .sheet{padding:14px 12px 40px;gap:12px}
- .chead h1{font-size:20px}
- .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
- .facts div{border-left:0;border-top:1px solid var(--rule-2)}
- .facts div:nth-child(-n+2){border-top:0}
- .facts div:nth-child(even){border-left:1px solid var(--rule-2)}
- .facts dd{font-size:17px}
- .seg button{font-size:11px}
- .twrap{max-height:none}
- .who span,.who b{display:none}
- .bar .btn.sm{padding:5px 8px}
- .context{white-space:nowrap}
-}
+
 @media (prefers-reduced-motion:reduce){*,*:before{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 @media (forced-colors:active){.list .row.sel{outline:2px solid Highlight}.kick,.pill{border:1px solid}}
-@media (max-width:380px){#help-open{display:none}.brand b{font-size:14px}}
+
 
 /* first view */
 .overview{max-width:980px;padding:40px 40px 48px}
@@ -245,24 +224,12 @@ body[data-layout=page] .queue{max-width:none}
 .ostats dt{font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .ostats dd{font:600 16px var(--mono)}
 .chart .ev{fill:var(--excursion);font-weight:600}
-@media (max-width:760px){.overview{padding:20px 14px}.overview h1{font-size:22px}}
+
 .chart .ax{font-size:11px}
 .chart .gapt{fill:var(--unverified);font-weight:600;font-size:12px;paint-order:stroke;stroke:#fff;stroke-width:4px}
 .ocard{grid-template-rows:auto 1fr auto auto}
 .ocard .ov{font-size:18px}
-@media (max-width:760px){
- .unitsp thead{display:none}
- .unitsp tbody tr{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"sel unit st" "sel meta meta";gap:2px 10px;padding:9px 10px;border-bottom:1px solid var(--rule-2)}
- .unitsp td{border:0;padding:0}
- .unitsp .c-sel{grid-area:sel;padding-top:2px}
- .unitsp .c-unit{grid-area:unit;white-space:normal}
- .unitsp .c-st{grid-area:st}
- .unitsp .c-comp,.unitsp .c-grp,.unitsp .c-exp{grid-row:2;font-size:12px;color:var(--ink-3)}
- .unitsp .c-comp{grid-column:2;justify-self:start}
- .unitsp .c-grp{grid-column:2;justify-self:center}
- .unitsp .c-exp{grid-column:2/4;justify-self:end}
- .chart .ax{font-size:17px}.chart .gapt{font-size:18px}
-}
+
 td.c-unit{white-space:normal;min-width:200px}
 /* icons (Tabler, MIT) */
 .ic{width:1em;height:1em;vertical-align:-.14em;flex:none}
@@ -285,3 +252,28 @@ td.c-unit{white-space:normal;min-width:200px}
 .roles li.cannot::before{content:"";position:absolute;left:2px;top:.55em;width:11px;height:2px;background:var(--excursion)}
 .roles li.cannot{color:var(--ink-2)}
 .roles .why2{color:var(--ink-3);font-size:12px;margin:4px 0 0}
+/* toasts (after Sonner) */
+.toasts{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:60;width:min(460px,calc(100% - 24px));pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:flex-start;gap:12px;background:var(--ink);color:#fff;padding:11px 12px 11px 16px;border-radius:8px;font-size:13px;line-height:1.4;box-shadow:0 10px 30px rgba(17,17,22,.22),0 1px 0 rgba(255,255,255,.06) inset;opacity:0;transform:translateY(10px) scale(.98);transition:opacity .16s ease,transform .2s cubic-bezier(.2,.8,.2,1)}
+.toast.in{opacity:1;transform:none}.toast.out{opacity:0;transform:translateY(6px) scale(.98)}
+.toast.bad{background:var(--excursion)}
+.toast .tm{flex:1}.toast .tx{background:none;border:0;color:inherit;opacity:.7;font-size:18px;line-height:1;cursor:pointer;padding:0 2px}.toast .tx:hover{opacity:1}
+/* command menu (after cmdk) */
+.cmd{padding:0;width:min(620px,calc(100% - 24px));border:1px solid var(--rule);border-radius:12px;box-shadow:0 24px 70px rgba(17,17,22,.28);margin-top:12vh;overflow:hidden}
+.cmd::backdrop{background:rgba(17,17,22,.35)}
+.cmd input{width:100%;border:0;border-bottom:1px solid var(--rule);font:16px var(--sans);padding:16px 18px;outline:none}
+.cmd ul{list-style:none;margin:0;padding:6px;max-height:min(420px,55vh);overflow:auto}
+.cmd li[role=option]{padding:9px 12px;border-radius:7px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.cmd li[role=option] span{color:var(--ink-3);font:12px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmd li[aria-selected=true]{background:var(--paper)}
+.cmd .cg{padding:10px 12px 4px;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.cmdfoot{margin:0;padding:8px 14px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-3);display:flex;gap:6px;align-items:center}
+.cmdbtn{display:inline-flex;align-items:center;gap:6px;color:#C9CED3}.cmdbtn kbd{background:transparent;color:#9AA3AB;border-color:#3A3F46}
+/* micro-interactions: quick, physical, and off for reduced motion */
+.btn{transition:background-color .12s,border-color .12s,transform .08s}
+.btn:active:not(:disabled){transform:scale(.97)}
+.list .row{transition:background-color .1s}
+/* phone decision bar */
+.decidebar{display:none}
+
+@media (prefers-reduced-motion:reduce){.toast,.btn,.list .row{transition:none}.btn:active:not(:disabled){transform:none}}
