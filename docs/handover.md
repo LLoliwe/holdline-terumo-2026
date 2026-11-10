@@ -60,7 +60,7 @@ Roles come from each member's own intro email. Admire sent none.
 
 ## Weak points (adversarial review)
 - The data-quality figures on the dashboard (94%, 41 h, 2, 97%) are illustrative. Replace them with real queries.
-- The README says 60 sensor glitches, but we counted 55. Check how 0.0 is counted before quoting it.
+- Glitches settled: the published temperature_logs.csv holds 55 (0.0 x22, -99.0 x17, 99.9 x16). The dataset README says 60. We report 55.
 - The 2,119 exposed units mostly show no excursion in the hospital's hourly log. Exposure may come from logger gaps. That is a data-quality finding worth building on, but it is unproven.
 - "Holdline" is a working name. Changing it is cheap.
 - The design files count as work in the repo. They were made at 11:53 to 11:59 SAST, inside the build window (from 11:00 SAST).
@@ -70,7 +70,25 @@ Roles come from each member's own intro email. Admire sent none.
 1. Lebo: solo or TrustLedger. Chase Hany if there's no reply by 14:00.
 2. Lebo: send teammates' and organisers' GitHub usernames, or decide to make the repo public now.
 3. Team: agree the Holdline workflow at the 14:00 expert Q&A (optional) and check the problem with the expert.
-4. Build: ingest temperature_logs, power_outages, units and transfers, then the excursion detector, the hold queue, Accept / Change / Reject, the audit log and the SMS text.
-5. Baseline: compare "flag only above 6°C" with "hold, including logger gaps", and report units caught.
+4. DONE 12:11: build and baseline (see log below).
+5. Lebo: choose the submission, HOLDLINE, the Drive CP5 custody workbench, or a merge. Two builds exist.
 6. 19:00 check-in 1. 05:00 check-in 2. Video by 09:00 Wed. Submit by 11:00 Wed SAST.
 7. Friday showcase clash: needs Hany's written slot.
+
+
+## Build log (SAST, 2026/11/10)
+- 12:04 Detector, exposure tracing and evaluation committed (194e98a). Baseline vs HOLDLINE computed on the full year against units.temp_excursion_exposed.
+- 12:10 Drive read (read-only). Found a parallel build: "Terumo Hackathon - START HERE (canonical index).md" (modified 12:01), "agent handoff brief (canonical).txt" (11:52), "prototype checkpoint 5" zip (11:51, custody reconciliation workbench). Brand source: "Grok_Brand_Assets_2026-10-22_v2.zip" (2026/10/22 07:31), Pryntor R3 ink #111116. No "branding company" or "instruct" file found.
+- 12:11 Hold queue, Accept / Change / Reject with qualified releaser and second signature, append-only SHA-256 audit chain, SMS fallback, offline UI with decision queue, 23 tests (22 pass without data, 1 end-to-end with data, all pass). Commit 2895d50. Ink token aligned to Pryntor R3 (6d4f230).
+
+## Results (reproduce with python3 -m holdline.evaluate data)
+| | Held | Recall | Precision | False holds | Exposed-then-transfused caught |
+|---|---|---|---|---|---|
+| Baseline (any reading >6°C) | 28,619 | 96.9% | 24.1% | 21,727 | 2,085 / 2,119 |
+| HOLDLINE | 10,259 | 95.4% | 66.1% | 3,473 | 2,101 / 2,119 |
+Later-data check (units collected from 2026/07/01): precision 16.2% to 48.6%, recall 96.8% both.
+
+## Honest gaps
+- Not hosted: a public host would carry the organiser data. Lebo decides.
+- Residency and truth both day-level; disclosed in README.
+- Demo users, no real log-in; SMS simulated; no video yet.

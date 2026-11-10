@@ -69,12 +69,12 @@ Where it sits: beside an existing blood bank information system, between the fri
 - **Ground truth**: `units.temp_excursion_exposed` from the starter dataset. The generator sets it from the fridge's true temperature, including hours the logger did not record, and from cool box peaks above 10°C.
 - **Result, full year (49,426 units, 7,112 exposed)**, from `docs/metrics.json`:
 
-| | Units held | Exposed caught (recall) | Precision | False holds | Exposed-and-transfused held first |
+| | Units held | Exposed caught (recall) | Precision | False holds | Exposed-and-transfused units caught by a hold |
 |---|---|---|---|---|---|
 | Baseline | 28,619 | 96.9% | 24.1% | 21,727 | 2,085 / 2,119 |
 | HOLDLINE | 10,259 | 95.4% | 66.1% | 3,473 | 2,101 / 2,119 |
 
-- **Check on later data only** (units collected from 2026-07-01, 1,611 exposed): baseline precision 16.2%, recall 96.8%; HOLDLINE precision 48.6%, recall 96.8%, and 459 of 459 exposed-and-transfused units held.
+- **Check on later data only** (units collected from 2026-07-01, 1,611 exposed): baseline precision 16.2%, recall 96.8%; HOLDLINE precision 48.6%, recall 96.8%, and 459 of 459 exposed-and-transfused units caught by a hold. Timing caveat: a unit transfused earlier on the event day could not have been stopped; this is day-level.
 - Thresholds (6°C, 2 hours, 3-hour gap, 10°C cool box) were set from the data dictionary and cold-chain practice before scoring. They were not tuned on the labels. HOLDLINE misses 106 more exposed units than the baseline (326 against 220) in exchange for 18,254 fewer false holds; that trade is stated, not hidden.
 - **How a user sees the reason**: each case states it in words (for example RBTC-MSA on 2025-11-24: "23 consecutive hourly readings above 6°C, peak 22.6°C"), with the 48-hour chart.
 - **Who approves**: the duty officer can confirm a hold; only the qualified manager can release, with a second signature.
