@@ -71,7 +71,7 @@ async function list() {
   if (!r.data.length) { el.innerHTML = `<p class="empty" style="padding:18px">Nothing here.</p>`; return; }
   el.innerHTML = r.data.map(c => `<button class="case ${c.id === state.sel ? "sel" : ""}" data-id="${esc(c.id)}">
     <div class="t">${esc(c.facility_name || c.facility_id)}</div>
-    <div class="m"><span class="chip ${c.kind === "EXCURSION" ? "ex" : "un"}">${c.kind === "EXCURSION" ? "Excursion" : "Logger gap"}</span> ${esc(c.start.replace("T", " ").slice(0, 16))} · ${c.n} units</div></button>`).join("");
+    <div class="m"><span class="chip ${c.kind === "EXCURSION" ? "ex" : "un"}">${c.kind === "EXCURSION" ? "Measured excursion" : "Presumed: logger gap"}</span> ${esc(c.start.replace("T", " ").slice(0, 16))} · ${c.n} units</div></button>`).join("");
   el.querySelectorAll(".case").forEach(b => b.onclick = () => { state.sel = b.dataset.id; list(); detail(); });
 }
 function chart(rs, start, end) {

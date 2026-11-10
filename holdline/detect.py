@@ -35,14 +35,14 @@ def holdline_events(facility_id, readings, outs, cfg):
     ev = []
     for t, v in glitches:
         ev.append(dict(facility_id=facility_id, kind="GLITCH", start=t, end=t, peak=v, hold=False,
-                       reason=f"Sensor value {v} is a known glitch code; reading ignored"))
+                       reason=f"Ignored: sensor value {v} is a known glitch code"))
     lim, need = cfg["fridge_max_c"], cfg["persist_hours"]
     run = []
     def close_run():
         if len(run) >= need:
             peak = max(v for _, v in run)
             ev.append(dict(facility_id=facility_id, kind="EXCURSION", start=run[0][0], end=run[-1][0], peak=peak,
-                           hold=True, reason=f"{len(run)} consecutive hourly readings above {lim:g}°C, peak {peak:.1f}°C"))
+                           hold=True, reason=f"Measured: {len(run)} consecutive hourly readings above {lim:g}°C, peak {peak:.1f}°C"))
     glitch_t = {t for t, _ in glitches}
     prev = None
     for t, v in valid:
@@ -61,10 +61,10 @@ def holdline_events(facility_id, readings, outs, cfg):
                     if o: why.append(f"power cut without backup {o[0]:%H:%M} to {o[1]:%H:%M}")
                     if after_hot: why.append(f"first reading after the gap is {v:.1f}°C")
                     ev.append(dict(facility_id=facility_id, kind="GAP_PRESUMED", start=g0, end=g1, peak=None, hold=True,
-                                   reason=f"Logger silent {gap_h} h; " + "; ".join(why)))
+                                   reason=f"Presumed, not measured: logger silent {gap_h} h; " + "; ".join(why) + ". The real temperature in the gap is unknown"))
                 else:
                     ev.append(dict(facility_id=facility_id, kind="UNVERIFIED", start=g0, end=g1, peak=None, hold=False,
-                                   reason=f"Logger silent {gap_h} h; no power cut recorded; readings either side in range"))
+                                   reason=f"Unknown: logger silent {gap_h} h; no power cut recorded; readings either side in range. Not held"))
         if v > lim:
             run.append((t, v))
         else:

@@ -81,7 +81,7 @@ What this shows: HOLDLINE holds **18,254 fewer units by mistake** at about the s
 
 - **Check on later data only** (units collected from 2026-07-01, 1,611 exposed): baseline precision 16.2%, recall 96.8%; HOLDLINE precision 48.6%, recall 96.8%. Held before transfusion day: baseline 433, HOLDLINE 419 (of 459).
 - Thresholds are **our chosen configuration** (`holdline/config/kenya.json`): 2 consecutive hours, a 3-hour gap, a 10°C cool box. The data dictionary only establishes the 2 to 6°C range. They were set before scoring and not tuned on the labels. No confidence probabilities are produced. HOLDLINE misses 106 more exposed units than the baseline (326 against 220) in exchange for 18,254 fewer false holds; that trade is stated, not hidden.
-- **How a user sees the reason**: each case states it in words (for example RBTC-MSA on 2025-11-24: "23 consecutive hourly readings above 6°C, peak 22.6°C"), with the 48-hour chart.
+- **How a user sees the reason**: each case starts with how sure it is, "Measured", "Presumed, not measured" (logger gap during a power cut) or "Unknown" (shown, not held), then states the reason in words (for example RBTC-MSA on 2025-11-24: "23 consecutive hourly readings above 6°C, peak 22.6°C"), with the 48-hour chart.
 - **Who approves**: the duty officer can confirm a hold; only a qualified manager can release, with a second qualified signer verified by the server (demo log-in).
 - **If the detector is wrong or offline**: a hold is the safe default, so a false hold costs a staff check. If the server is unreachable the device keeps the last view and queues decisions. Missed events stay possible (326 in the year), so the manual fridge chart check is not removed.
 
