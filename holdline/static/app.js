@@ -292,6 +292,11 @@ function steps(d) {
   ];
   return `<ol class="steps" aria-label="Review progress">${items.map(([k, s], i) => `<li class="${s}"${s === "now" ? ' aria-current="step"' : ""}><span class="dot" aria-hidden="true">${s === "done" ? "✓" : i + 1}</span>${esc(k)}<span class="sr-only">${s === "done" ? " (done)" : s === "now" ? " (current)" : s === "skip" ? " (not needed)" : ""}</span></li>`).join("")}</ol>`;
 }
+function explainLine(d) {
+  const ex = d.explain;
+  if (!ex || !ex.rule) return "";
+  return `<p class="why"><b>Why this hold.</b> ${esc(ex.rule)}. Evidence: ${esc(ex.evidence)}. ${esc(ex.uncertainty)}</p>`;
+}
 function renderCase(d) {
   const c = d.case, f = d.facility || {}, open = c.status === "OPEN", [cls, glyph, label] = KIND(c), e = evidence(d);
   const also = d.also_held || {}, alsoUnits = Object.keys(also);
@@ -306,6 +311,7 @@ function renderCase(d) {
     <div id="steps-mount">${steps(d)}</div>
     <div class="hero"><h1>${esc(f.name || c.facility_id)}</h1><div class="hpeak ${c.kind === "EXCURSION" ? "ex" : "un"}"><span class="hpl">${c.kind === "EXCURSION" ? "Peak" : "Peak in the gap"}</span><span class="hpv">${c.kind === "EXCURSION" && c.peak != null ? esc(c.peak) + "<small>°C</small>" : "unknown"}</span></div></div>
     <p class="why"><span class="g ${cls}">${glyph}</span> <b>${label}.</b> ${esc(c.reason)}.</p>
+    ${explainLine(d)}
     <p class="meta"><span>${esc(ts(c.start))} → ${esc(ts(c.end))} EAT</span><span>${esc(f.county || "")}</span><span>${esc(f.connectivity || "")}</span><span>backup power: ${f.has_blood_fridge_backup_power === "True" ? "yes" : "no"}</span><span class="mono">${esc(c.id)}</span></p>
    </header>
    <dl class="facts" aria-label="Evidence summary">
