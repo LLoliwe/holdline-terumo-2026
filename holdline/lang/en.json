@@ -7,5 +7,5 @@
   "sms_why_gap": "power cut, no backup",
   "sms_held": "{n} held",
   "sms_more": " +{n} more",
-  "sms_tail": "Do not issue. Reply 1 moved, 2 call me."
+  "sms_tail": "Do not release. Reply 1 moved, 2 call me."
 }

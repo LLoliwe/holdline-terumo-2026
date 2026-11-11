@@ -1,8 +1,8 @@
 # HOLDLINE demonstration walkthrough
 
-A local review candidate was rendered from actual browser interactions on the synthetic starter dataset. It is a narrated sequence of application captures, not an uninterrupted screen recording. Duration: **172.86 seconds (2:52.86)**. The earlier demonstration remains a separate version; the project lead chooses the final cut.
+The current film was rendered from actual browser interactions on the synthetic starter dataset. It is a narrated sequence of application captures, not an uninterrupted screen recording. File: `HOLDLINE-demo-Lebohang-Loliwe.mp4`. Duration: **163.188 seconds (2:43.19)**. SHA-256 `63837c8ed2f78e04bcbc7fdb9529e1a2ea67e699df7c5c941cde94fd79c2a0e8`, 6,410,693 bytes. It predates the case-screen explain line, the distinct week unit count (77, not the summed 83) and the SMS wording "Do not release". The scene table below was written for an earlier 2:52.86 cut and has not been re-timed against this file.
 
-Local artifact: `out/demo/HOLDLINE-demo.mp4` (ignored by Git). Public delivery link is not yet configured. Proof: `out/demo/browser-evidence.json`, `restart-evidence.json`, `video-manifest.json`. Full narration is in `scripts/render_demo.py`; the exported transcript accompanies the video.
+Local artifact: `out/demo/HOLDLINE-demo-Lebohang-Loliwe.mp4` (ignored by Git). Public delivery link is not yet configured. Proof: `out/demo/browser-evidence.json`, `restart-evidence.json`, `video-manifest.json`. Full narration is in `scripts/render_demo.py`; the exported transcript accompanies the video.
 
 | Start | Actual application state | Demonstration |
 |---|---|---|

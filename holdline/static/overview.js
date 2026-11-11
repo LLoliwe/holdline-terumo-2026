@@ -48,6 +48,17 @@
     return Math.floor(Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi) / 60000);
   }
   function units(c) { return Number(c && c.n) || 0; }
+  // Count each unit once across a set of holds when the server sent unit ids;
+  // holds without ids fall back to their own count.
+  function distinctUnits(holds) {
+    const seen = new Set();
+    let extra = 0;
+    for (const c of holds || []) {
+      if (c && Array.isArray(c.unit_ids)) c.unit_ids.forEach(u => seen.add(String(u)));
+      else extra += units(c);
+    }
+    return seen.size + extra;
+  }
   function holdEnd(c) {
     const a = toMin(c.start);
     if (a == null) return null;
@@ -83,7 +94,7 @@
     }
     const fridges = [...by.values()].map(f => {
       f.holds.sort((a, b) => ts(a.start).localeCompare(ts(b.start)));
-      f.units = f.holds.reduce((s, c) => s + units(c), 0);
+      f.units = distinctUnits(f.holds);
       f.primary = largest(f.holds);
       return f;
     }).sort((a, b) => b.units - a.units || String(a.name).localeCompare(String(b.name)));
@@ -126,7 +137,7 @@
         return {
           holds,
           primary: largest(holds),
-          units: holds.reduce((s, c) => s + units(c), 0),
+          units: distinctUnits(holds),
           ex: holds.some(c => c.kind === "EXCURSION"),
           gap: holds.some(c => c.kind !== "EXCURSION"),
         };
@@ -134,16 +145,16 @@
       const once = new Map();
       f.cells.forEach(cell => cell.holds.forEach(c => once.set(c.id, c)));
       f.holds = [...once.values()].sort((a, b) => ts(a.start).localeCompare(ts(b.start)));
-      f.units = f.holds.reduce((s, c) => s + units(c), 0);
+      f.units = distinctUnits(f.holds);
       f.primary = largest(f.holds);
       return f;
     }).sort((a, b) => b.units - a.units || String(a.name).localeCompare(String(b.name)));
     return {
       night, nights, fridges,
-      weekUnits: on.reduce((s, c) => s + units(c), 0),
+      weekUnits: distinctUnits(on),
       weekHolds: on.length,
       otherHolds: off.length,
-      otherUnits: off.reduce((s, c) => s + units(c), 0),
+      otherUnits: distinctUnits(off),
     };
   }
 
@@ -234,7 +245,7 @@
     const outside = g.otherHolds ? `${fmt(g.otherHolds)} open hold${g.otherHolds === 1 ? "" : "s"} sit outside these 7 nights and stay in the queue.` : "Every open hold falls in these 7 nights.";
     const all = s.units_on_hold != null ? ` ${fmt(s.units_on_hold)} units are on hold in the whole queue.` : "";
     const first = g.nights[0], last = g.nights[g.nights.length - 1];
-    mount.innerHTML = `<div class="overview morning"><p class="eyebrow">Latest night in the data · ${esc(g.night.start)} to ${esc(g.night.end.slice(11))} EAT</p><h1>${headline(g)}</h1><p class="why">Last 7 nights, 18:00 to 08:00, latest on the right. The number is units on hold; choose a cell to open its largest hold.</p><div class="mlegend"><span><i class="mdot ex"></i>Measured, above 6°C</span><span><i class="mdot gap"></i>Logger gap</span><span><i class="mdot safe"></i>Clear that night</span></div><details class="howto"><summary>How to read this</summary><p>The grid runs ${esc(first.start.slice(0, 10))} through ${esc(last.end.slice(0, 10))}. Red is a measured excursion. Orange is a logger gap, so the temperature is unknown. A red cell with an orange bar has both. Clear means no open hold. A hold that runs through two nights shows in both cells. A fridge with no open hold in the week is not listed. ${outside}${all}</p></details><div class="mgrid"><table class="week"><caption class="sr-only">Last 7 nights by fridge. A cell opens the largest hold on that fridge that night.</caption><thead><tr><th scope="col">Fridge</th>${heads}</tr></thead><tbody>${body || `<tr><td colspan="8">No open hold overlaps these 7 nights.</td></tr>`}</tbody></table></div><details class="rtable mtable"><summary>These 7 nights as a table (${fmt(g.weekHolds)} hold${g.weekHolds === 1 ? "" : "s"})</summary><div class="twrap"><table><thead><tr><th scope="col">Fridge</th><th scope="col">Nights</th><th scope="col">Kind</th><th scope="col">Start</th><th scope="col">End</th><th scope="col">Peak</th><th scope="col">Units</th><th scope="col">Case</th></tr></thead><tbody>${tableRows}</tbody></table></div></details><p class="eyebrow subeye">Also start here</p>${cardsHtml(rows)}<dl class="ostats"><div><dt>Measured excursions</dt><dd>${fmt(rows.filter(c => c.kind === "EXCURSION").length)}</dd></div><div><dt>Presumed (logger gap)</dt><dd>${fmt(rows.filter(c => c.kind !== "EXCURSION").length)}</dd></div><div><dt>Window</dt><dd>since ${esc(s.dataset_since || "")}</dd></div></dl></div>`;
+    mount.innerHTML = `<div class="overview morning"><p class="eyebrow">Latest night in the data · ${esc(g.night.start)} to ${esc(g.night.end.slice(11))} EAT</p><h1>${headline(g)}</h1><p class="why">Last 7 nights, 18:00 to 08:00, latest on the right. The number is units on hold; choose a cell to open its largest hold.</p><div class="mlegend"><span><i class="mdot ex"></i>Measured, above 6°C</span><span><i class="mdot gap"></i>Logger gap</span><span><i class="mdot safe"></i>Clear that night</span></div><details class="howto"><summary>How to read this</summary><p>The grid runs the nights of ${esc(first.start.slice(0, 10))} through ${esc(last.start.slice(0, 10))}. Red is a measured excursion. Orange is a logger gap, so the temperature is unknown. A red cell with an orange bar has both. Clear means no open hold. A hold that runs through two nights shows in both cells. A fridge with no open hold in the week is not listed. ${outside}${all}</p></details><div class="mgrid"><table class="week"><caption class="sr-only">Last 7 nights by fridge. A cell opens the largest hold on that fridge that night.</caption><thead><tr><th scope="col">Fridge</th>${heads}</tr></thead><tbody>${body || `<tr><td colspan="8">No open hold overlaps these 7 nights.</td></tr>`}</tbody></table></div><details class="rtable mtable"><summary>These 7 nights as a table (${fmt(g.weekHolds)} hold${g.weekHolds === 1 ? "" : "s"})</summary><div class="twrap"><table><thead><tr><th scope="col">Fridge</th><th scope="col">Nights</th><th scope="col">Kind</th><th scope="col">Start</th><th scope="col">End</th><th scope="col">Peak</th><th scope="col">Units</th><th scope="col">Case</th></tr></thead><tbody>${tableRows}</tbody></table></div></details><p class="eyebrow subeye">Also start here</p>${cardsHtml(rows)}<dl class="ostats"><div><dt>Measured excursions</dt><dd>${fmt(rows.filter(c => c.kind === "EXCURSION").length)}</dd></div><div><dt>Presumed (logger gap)</dt><dd>${fmt(rows.filter(c => c.kind !== "EXCURSION").length)}</dd></div><div><dt>Window</dt><dd>since ${esc(s.dataset_since || "")}</dd></div></dl></div>`;
     wireMorning(mount);
   }
 

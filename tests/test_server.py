@@ -117,3 +117,16 @@ class QueueList(_Base):
         self.assertEqual(len({r["id"] for r in rows}), 251)
         self.assertTrue(all(r["facility_county"] == "Test County" for r in rows))
         self.assertEqual([r["start"] for r in rows], sorted((r["start"] for r in rows), reverse=True))
+
+    def test_case_list_sends_unit_ids(self):
+        cfg, db = server.STATE["cfg"], server.STATE["db"]
+        server.STATE["fac"] = {"HSP-2": {"name": "Ids Hospital", "county": "C"}}
+        ev = dict(facility_id="HSP-2", kind="EXCURSION", start=datetime(2026, 8, 1), end=datetime(2026, 8, 1, 3),
+                  peak=7.5, reason="t", hold=True)
+        units = [dict(unit_id=f"ID{i}", component="RBC", blood_group="O+", expiry_date="2026-12-01") for i in range(3)]
+        store.open_case(db, ev, units, cfg)
+        code, rows = self.get("/api/cases?status=OPEN", self.login("demo.officer", "1111"))
+        self.assertEqual(code, 200)
+        row = next(r for r in rows if r["facility_id"] == "HSP-2")
+        self.assertEqual(row["n"], 3)
+        self.assertEqual(sorted(row["unit_ids"]), ["ID0", "ID1", "ID2"])

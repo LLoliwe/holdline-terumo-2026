@@ -30,7 +30,7 @@ A working web app plus a tested Python engine:
 
 Mocked or not finished: SMS is not sent (no gateway); log-in is a **demo log-in** (three synthetic users with PINs in `holdline/config/demo_users.json`), not real authentication; sessions are in memory; the data is the organiser's synthetic set loaded at start-up, not a live logger feed.
 
-Demo video: a **2:52.86 local review candidate** is rendered from verified application captures; public delivery link pending. See [walkthrough details](docs/VIDEO_SCRIPT.md). No new version has been submitted.
+Demo video: `HOLDLINE-demo-Lebohang-Loliwe.mp4`, **2:43.19** (163.188 s), rendered from verified application captures on the synthetic starter dataset; public link pending. It was rendered before the case-screen explain line and the distinct unit count were added, so those two screens differ slightly from current main. See [walkthrough details](docs/VIDEO_SCRIPT.md).
 Live demo: not hosted, by decision (the starter kit has no clear public redistribution right). Run locally; the demonstration captures the working application.
 
 ## How to run it
@@ -73,7 +73,7 @@ temperature_logs, power_outages, transfers, units (CSV)
    server.py (stdlib HTTP, JSON API) ──► static UI (service worker + localStorage queue)
 ```
 
-Where it sits: beside an existing blood bank information system, between the fridge logger and the issue desk. Units are referenced by ISBT 128-style unit IDs as given in the dataset; no FHIR or DHIS2 integration is built.
+Where it sits: beside an existing blood bank information system, between the fridge logger and the issue desk. Units are referenced by ISBT 128-style unit IDs as given in the dataset; no live FHIR, DHIS2 or ABBIS connection is built. A FHIR R4 file export exists (feature 9); it is not validated against a live FHIR server.
 
 ## AI and data
 - **What it does**: a rule-based anomaly detector (glitch filtering, persistence, logger-gap inference from power-cut records). No machine-learning model: a transparent rule gives much higher precision than the baseline on this data, and every reason can be read.

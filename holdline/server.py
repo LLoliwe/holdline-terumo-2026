@@ -158,8 +158,14 @@ class H(SimpleHTTPRequestHandler):
             # The queue used to stop at 200 rows, so a fresh full-history demo hid 212 of 412 open holds from the
             # operator. Return the whole status list (bounded) so the client can search, filter and sort all of it.
             fac = STATE["fac"]
+            # Unit ids per case let the overview count a unit that sits on two holds once, not twice.
+            ids = {}
+            for cu in db.execute("""SELECT cu.case_id, cu.unit_id FROM case_units cu JOIN cases c ON c.id=cu.case_id
+                                    WHERE c.status=?""", (st,)):
+                ids.setdefault(cu["case_id"], []).append(cu["unit_id"])
             return self._json([dict(r) | {"facility_name": fac.get(r["facility_id"], {}).get("name"),
-                                          "facility_county": fac.get(r["facility_id"], {}).get("county")} for r in rows])
+                                          "facility_county": fac.get(r["facility_id"], {}).get("county"),
+                                          "unit_ids": ids.get(r["id"], [])} for r in rows])
         if u.path.startswith("/api/case/"):
             cid = u.path.split("/")[-1]
             c = db.execute("SELECT * FROM cases WHERE id=?", (cid,)).fetchone()

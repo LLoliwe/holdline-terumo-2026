@@ -95,3 +95,23 @@ test("a hold that ends at 18:00 does not enter the night that starts then", () =
   assert.equal(g.otherHolds, 1);
   assert.equal(g.night.start, "2026-10-29 18:00");
 });
+
+test("a unit in two holds is counted once in the week", () => {
+  const rows = [
+    {id: "A", facility_id: "F1", facility_name: "One", start: "2026-10-30T01:00:00", end: "2026-10-30T03:00:00", kind: "EXCURSION", n: 3, unit_ids: ["U1", "U2", "U3"]},
+    {id: "B", facility_id: "F1", facility_name: "One", start: "2026-10-28T01:00:00", end: "2026-10-28T03:00:00", kind: "GAP_PRESUMED", n: 2, unit_ids: ["U3", "U4"]},
+  ];
+  const g = groupWeek(rows);
+  assert.equal(g.weekHolds, 2);
+  assert.equal(g.weekUnits, 4);
+  assert.equal(g.fridges[0].units, 4);
+  assert.equal(g.fridges[0].cells[6].units, 3);
+});
+
+test("holds without unit ids keep their own count", () => {
+  const rows = [
+    {id: "A", facility_id: "F1", facility_name: "One", start: "2026-10-30T01:00:00", end: "2026-10-30T03:00:00", kind: "EXCURSION", n: 5},
+    {id: "B", facility_id: "F1", facility_name: "One", start: "2026-10-30T04:00:00", end: "2026-10-30T05:00:00", kind: "EXCURSION", n: 2, unit_ids: ["X1", "X2"]},
+  ];
+  assert.equal(groupWeek(rows).weekUnits, 7);
+});
