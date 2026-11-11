@@ -1,0 +1,43 @@
+# Managed by LLoliwe/pryntor-agent-skills (principles kit, P46, P54, P57, P58, P61).
+# R0: runs only against preview deployments that GitHub reports for this repo (e.g. Vercel previews).
+# Never point it at production or any third party's site (P47).
+name: pryntor-ui
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Preview URL you own (not production)"
+        required: true
+permissions:
+  contents: read
+jobs:
+  ui:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.deployment_status.state == 'success' && github.event.deployment.environment != 'Production' && github.event.deployment.environment != 'production') }}
+    runs-on: ubuntu-latest
+    env:
+      URL: ${{ github.event.inputs.url || github.event.deployment_status.environment_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+      - name: Security headers and CSP (P46)
+        run: bash .pryntor/ui/check-headers.sh "$URL"
+      - name: OWASP ZAP baseline, passive only (P46)
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25 # v0.15.0
+        with:
+          target: ${{ env.URL }}
+          allow_issue_writing: false
+          fail_action: true
+          rules_file_name: .pryntor/ui/zap-rules.tsv
+      - name: Install UI tools (pinned)
+        run: npm i --no-save --no-audit --no-fund @lhci/cli@0.16.0 pa11y-ci@5.0.0 @playwright/test@1.65.0 @axe-core/playwright@4.14.0 && npx playwright install --with-deps chromium
+      - name: Lighthouse CI budgets (P57, P58)
+        run: npx lhci autorun --config=.pryntor/ui/lighthouserc.json --collect.url="$URL"
+      - name: axe via pa11y-ci (P57)
+        run: npx pa11y-ci --config .pryntor/ui/pa11yci.json "$URL"
+      - name: Visual regression, reduced motion, CLS, axe at Lebo's device sizes (P54, P57, P61)
+        # Report-only until baselines are committed (run once with --update-snapshots and review). Then remove continue-on-error.
+        continue-on-error: true
+        run: npx playwright test -c .pryntor/ui/playwright.config.ts

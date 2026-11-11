@@ -1,0 +1,31 @@
+# Managed by LLoliwe/pryntor-agent-skills (principles kit). R0: GitHub-hosted runner, no secrets.
+name: pryntor-principles
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  principles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Principles present, current and wired
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bash .pryntor/check-principles.sh
+      - name: Banned-buzzword check on UI and content copy (P74)
+        run: python3 .pryntor/check-buzzwords.py
+      - name: One component library, no raw primitives (P75)
+        run: python3 .pryntor/check-raw-ui.py
+      - name: Media provenance (P77)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 .pryntor/check-media.py
+      - name: Model weights licences (P29, P78)
+        run: python3 .pryntor/check-models.py
+      - name: Deep security audit artefacts (P89)
+        run: python3 .pryntor/check-security-audit.py
