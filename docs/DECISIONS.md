@@ -68,3 +68,10 @@
 - **How:** fresh captures of main 0f4b97e with `scripts/film_capture.mjs` (the older `browser_demo.mjs` targets the pre-redesign UI and no longer runs). Rendered with `scripts/render_demo_v2.py`: eased zooms, 0.25 s fades, footer titles, an end card. Two-pass loudness to −16 LUFS, true peak −1.5 dBFS. ElevenLabs image or video generation was not used. No purchase or plan change; the Operations account was already on a paid plan.
 - **Evidence:** duration 172.4 s (limit 180), SHA-256 `a5a039d8fa8942de34f058cfb75b583f59bb4d68be9b572204f169a5b980bbb7`, 64,255,277 bytes; capture assertions in `out/demo/v2/film-evidence.json`; frames checked by eye at every scene.
 - **Reproduce:** see docs/VIDEO_SCRIPT.md.
+
+## 2026/11/11 09:59: Demo film v3 submitted
+- **Decided by:** Lebohang Loliwe, choosing between v2 (ambient bed), v2-music (ElevenLabs Music score) and v3.
+- **Why:** readability. v3 pushes in on each element the narration names, so text is legible on a phone, and a cursor shows where to look.
+- **How:** 2× recapture of main with bounding boxes (`scripts/film_capture.mjs`, `DPR=2`), rendered with `scripts/render_demo_v3.py` on the v2-music audio. Cursor and clicks are an overlay on stills; disclosed in docs/VIDEO_SCRIPT.md.
+- **Evidence:** 172.4 s; −16.0 LUFS; Drive copy SHA-256 `4e5d9abe1a083102dc1f596ee744e8eaecc19693a68a914a5e749171650866bd`; master SHA-256 `19107b7671238fbfecaa40f77e2e984df97286b65b81600da1576ed88883a14a`; public link https://drive.google.com/file/d/1rHumzyooF8BuSP1Dlnwj_0y0hBdzOzaP/view?usp=sharing.
+- **Reproduce:** see docs/VIDEO_SCRIPT.md.

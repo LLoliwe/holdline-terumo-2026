@@ -41,12 +41,27 @@ async function until(expression, label = expression) {
   await shot('failure');
   throw new Error('Timed out: ' + label);
 }
+const BOXES = {};
+const BOXSEL = {
+  '01-overview': {head: 'main h1, #case h1', grid: '#case table, #case [role=grid], #case .grid'},
+  '02-measured-case': {title: '.hero h1', peak: '.hpeak', explain: '.chead p.why:nth-of-type(2)', facts: '.facts', units: '.unitsp'},
+  '03-sms': {sms: '#case .sms'},
+  '04-officer-gate': {accept: '[data-act="ACCEPT"]', reason: '#reason', roles: '.roles'},
+  '05-two-signatures': {confirm: '#decide .confirm', slide: '#slide', decide: '#decide', tick: '#ubody tr'},
+  '06-audit': {audit: 'ol.audit', last: 'ol.audit li:last-child', decide: '#decide'},
+  '07-offline-queued': {net: '#net', sync: '#sync', qnote: '#qnote', accept: '[data-act="ACCEPT"]'},
+  '08-offline-reload': {net: '#net', qnote: '#qnote', title: '.hero h1'},
+  '09-synced': {decided: '#decide h2', decide: '#decide', net: '#net'},
+  '10-metrics': {table: '#evaluation table', r1: '#evaluation tbody tr:nth-child(1)', r2: '#evaluation tbody tr:nth-child(2)', r3: '#evaluation tbody tr:nth-child(3)'},
+};
 async function shot(name, selector) {
   if (selector) await ev(`(document.querySelector(${JSON.stringify(selector)})||document.body).scrollIntoView({block:'center'})`);
   if (name !== 'failure') await ev(`document.querySelectorAll('#toasts > *').forEach(t=>t.remove())`);
   await sleep(400);
   const s = await send('Page.captureScreenshot', {format: 'png'});
   fs.writeFileSync(path.join(out, name + '.png'), Buffer.from(s.data, 'base64'));
+  if (BOXSEL[name]) BOXES[name] = await ev(`(()=>{const o={};for(const [k,q] of Object.entries(${JSON.stringify(BOXSEL[name])})){const e=document.querySelector(q);if(e){const r=e.getBoundingClientRect();o[k]=[r.x,r.y,r.width,r.height];}}return o;})()`);
+  fs.writeFileSync(path.join(out, 'boxes.json'), JSON.stringify(BOXES, null, 1));
   console.log('Captured ' + name);
 }
 async function key(k, code, vk) {
@@ -71,7 +86,7 @@ try {
   const t = await send('Target.createTarget', {url: 'about:blank'}, null);
   session = (await send('Target.attachToTarget', {targetId: t.targetId, flatten: true}, null)).sessionId;
   await send('Page.enable'); await send('Network.enable');
-  await send('Emulation.setDeviceMetricsOverride', {width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false});
+  await send('Emulation.setDeviceMetricsOverride', {width: 1440, height: 1000, deviceScaleFactor: Number(process.env.DPR || 1), mobile: false});
   await send('Page.navigate', {url: base});
   await until(`document.querySelectorAll('#list .row').length>1 && document.body.innerText.includes('intact')`, 'queue');
   await ev('document.fonts.ready'); await sleep(800);
