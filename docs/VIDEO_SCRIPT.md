@@ -1,23 +1,30 @@
 # HOLDLINE demonstration walkthrough
 
-The current film was rendered from actual browser interactions on the synthetic starter dataset. It is a narrated sequence of application captures, not an uninterrupted screen recording. File: `HOLDLINE-demo-Lebohang-Loliwe.mp4`. Duration: **163.188 seconds (2:43.19)**. SHA-256 `63837c8ed2f78e04bcbc7fdb9529e1a2ea67e699df7c5c941cde94fd79c2a0e8`, 6,410,693 bytes. It predates the case-screen explain line, the distinct week unit count (77, not the summed 83) and the SMS wording "Do not release". The scene table below was written for an earlier 2:52.86 cut and has not been re-timed against this file.
+Current film: `HOLDLINE-demo-Lebohang-Loliwe-v2.mp4`. Duration **172.4 seconds (2:52.40)**, measured from the finished file. 1920×1080, 30 fps (the 1440×1080 application area is pillarboxed, not stretched). SHA-256 `a5a039d8fa8942de34f058cfb75b583f59bb4d68be9b572204f169a5b980bbb7`, 64,255,277 bytes. Public link: https://drive.google.com/file/d/1i6fWA3yl79tnMcR6s8-dd7De5x6zIhWY/view?usp=sharing. That is the delivery copy (9,339,219 bytes, SHA-256 `6d57fc9d3c4133098d68b6357560ab84b866b18efa2e063bcca86bc0cde3a7c3`), two-pass re-encoded from the master above to stay under a 10 MB upload limit; same cut, mix (−16.0 LUFS) and duration.
 
-Local artifact: `out/demo/HOLDLINE-demo-Lebohang-Loliwe.mp4` (ignored by Git). Public delivery link is not yet configured. Proof: `out/demo/browser-evidence.json`, `restart-evidence.json`, `video-manifest.json`. Full narration is in `scripts/render_demo.py`; the exported transcript accompanies the video.
+It is a narrated sequence of real application captures with eased zooms, not an uninterrupted screen recording. Captures were taken on 2026/11/11 from main (0f4b97e) with a disposable in-memory decision store, on the organiser's synthetic starter dataset, window since 2026-10-01: `scripts/film_capture.mjs` performs the real decisions in headless Chrome and asserts the outcomes (Kajiado HL-HSP-007-2026102223-EXC: 2 units, peak 7.8°C, one unit released by a manager with a second signer; Naivasha offline Accept: queued, kept across an offline reload, applied once, all 26 units quarantined). `scripts/render_demo_v2.py` renders the film.
 
-| Start | Actual application state | Demonstration |
-|---|---|---|
-| 0:00 | Hold queue and year metrics | Synthetic-data context; no prevented-harm claim. The 7,112 exposed and 2,119 transfused counts come from evaluation, not header tiles. |
-| 0:21 | Kajiado case HL-HSP-007-2026102223-EXC | Three consecutive hourly readings above 6°C, peak 7.8°C, two units. |
-| 0:38 | SMS preview | 137 characters; simulated, nothing sent. |
-| 0:50 | Duty-officer session | Release controls disabled; Accept is always hold-only. |
-| 1:03 | Manager, one selected unit, second signer | Hypothetical reason. Other-case holds remain; this is not permission to issue a unit. |
-| 1:19 | Changed case and audit | One unit released within this case, one quarantined; actors recorded; decisions survive restart. |
-| 1:35 | Offline Naivasha Accept | Pending decision visible; 26 units stay held. |
-| 1:46 | Page reloaded offline | Cached case and pending decision retained. |
-| 1:54 | Reconnected, accepted case | Exactly one decision applied; all 26 units quarantined. |
-| 2:05 | Paired full-year metrics | Precision 24.1% → 66.1%; 18,254 fewer false holds, 106 additional exposed misses, 54 fewer held before transfusion day. |
-| 2:29 | Closing overview | Synthetic prototype, demo authentication, no live feed. Built by Lebohang Loliwe using AI coding agents under his direction. Named tools appear only in README disclosure. Synthetic voice disclosed. |
+Audio: narration by ElevenLabs voice Claire (`gsm4lUH9bnZ3pjR1Pw7w`, model `eleven_multilingual_v2`), script approved by Lebohang Loliwe on 2026/11/11 08:33 SAST; soft UI sound effects and a low ambient bed generated with ElevenLabs sound generation. Generated on Lebo's paid ElevenLabs plan (commercial use permitted under its terms). Mix: −16.0 LUFS integrated, true peak −1.5 dBFS. No macOS voice and no earlier audio is used. The end card discloses the AI narration and sound effects.
 
-Unverified gaps are engine outputs but are not shown in the staff queue. No real backup-fridge move, clinical validation, live SMS, or hardware power-loss testing is claimed.
+The previous 2:43.19 cut (`HOLDLINE-demo-Lebohang-Loliwe.mp4`, SHA-256 63837c8e…a0e8) is superseded: its narration was rejected and it predates the explain line, the distinct week count and the "Do not release" SMS.
 
-Reproduction requires local Chrome, macOS speech synthesis and ffmpeg in addition to the app's Python standard library. `node scripts/browser_demo.mjs` makes real decisions on synthetic cases; use a fresh disposable demo database for a new capture. The renderer checks that case facts match narration and refuses a mismatched recording. Preserve existing captures and database before rerunning.
+| Start | Capture | On-screen title | Narration |
+|---|---|---|---|
+| 0:00 | `01-overview` | HOLDLINE | The morning after a power dip | The power dipped overnight. Now it's morning. Which blood units need review? HOLDLINE organises that question, here on synthetic data. Since the first of October, thirty-three holds are open, covering one thousand two hundred and sixty distinct units. This is a prototype, not proof of clinical safety. |
+| 0:24 | `02-measured-case` | 01 / See why it held and the affected units | Step one. Inspect the evidence. At Kajiado, three hourly readings rise above six degrees, peaking at seven point eight. The screen says why it held: two consecutive readings above six degrees, measured, not presumed. Known glitch codes are filtered out. Two units were in that fridge, so both are held. |
+| 0:48 | `03-sms` | 02 / SMS preview: do not release (simulated) | Step two. Preview the SMS for the person on duty. It says: do not release. This alert is simulated. Nothing is sent. |
+| 0:59 | `04-officer-gate` | 03 / A duty officer can accept, not release | Step three. A person decides: Accept, Change or Reject. A duty officer cannot release units. Accept keeps every unit on this case on hold. |
+| 1:13 | `05-two-signatures` | 04 / Release: two different qualified signers | Release needs two different qualified signers, checked by the server. The manager selects a unit and records a reason. Only this case changes. A hold on the same unit in another case stays in place. |
+| 1:29 | `06-audit` | 05 / The audit records the decision and both signers | The audit records the decision and both signers. Hash-chain checks can reveal edits that break the chain. After a restart, the decision is still there. |
+| 1:41 | `07-offline-queued` | 06 / Offline: the Accept waits on the phone | What if the connection drops? An Accept decision waits on the phone. Release is never queued offline. |
+| 1:49 | `08-offline-reload` | 07 / Reload offline: case and decision kept | Reload while offline. The case and the pending decision are still there. |
+| 1:55 | `09-synced` | 08 / Reconnect: applied once, all 26 on hold | Reconnect, and Accept is applied once. All twenty-six units stay on hold. |
+| 2:01 | `10-metrics` | 09 / Full synthetic year: fewer false holds, a stated tradeoff | Across the full synthetic year, forty-nine thousand four hundred and twenty-six units, precision rises from twenty-four point one to sixty-six point one percent. That is eighteen thousand two hundred and fifty-four fewer false holds. But recall falls from ninety-six point nine to ninety-five point four: one hundred and six more missed exposures. This is a retrospective, day-level evaluation, not measured warning time or patient benefit. |
+| 2:35 | `01-overview` | HOLDLINE | Synthetic data. Needs clinical review. | That tradeoff needs clinical review. The thresholds are settings, not validated. The data is synthetic. HOLDLINE. Built by Lebo Loliwe. |
+| 2:47 | end card | | Built by Lebo Loliwe (Lebohang Loliwe) using AI coding agents under his direction. Synthetic data: Terumo BCT Africa Hackathon 2026 starter kit. Narration and sound effects: AI generated with ElevenLabs (voice: Claire). Working prototype. Not a medical device. Not clinically validated. |
+
+A variant with an ElevenLabs Music instrumental score ducked under the voice (`--music`, end card "Narration, sound effects and music: AI generated with ElevenLabs") was also rendered; which one is submitted is Lebohang Loliwe's choice and is recorded in docs/DECISIONS.md.
+
+Note on S2: the narration's "three hourly readings" is the event window (3 logged, 3 above 6°C, per the `explain` data); the case tile "Readings above 6°C: 4 of 49" counts the whole 24-hours-either-side chart.
+
+Reproduce: start `HOLDLINE_DB=:memory: python3 -m holdline.server data --port 4211 --since 2026-10-01`; run `CHROME_PATH=<chrome> bun scripts/film_capture.mjs`; put the ElevenLabs narration as `out/demo/v2/audio/01.mp3`…`11.mp3` and effects in `out/demo/v2/sfx/`; run `python3 scripts/render_demo_v2.py`. Media and captures are not committed (`out/` is ignored).

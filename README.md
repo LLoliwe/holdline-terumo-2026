@@ -30,7 +30,7 @@ A working web app plus a tested Python engine:
 
 Mocked or not finished: SMS is not sent (no gateway); log-in is a **demo log-in** (three synthetic users with PINs in `holdline/config/demo_users.json`), not real authentication; sessions are in memory; the data is the organiser's synthetic set loaded at start-up, not a live logger feed.
 
-Demo video: `HOLDLINE-demo-Lebohang-Loliwe.mp4`, **2:43.19** (163.188 s), rendered from verified application captures on the synthetic starter dataset; public link pending. It was rendered before the case-screen explain line and the distinct unit count were added, so those two screens differ slightly from current main. See [walkthrough details](docs/VIDEO_SCRIPT.md).
+Demo video: `HOLDLINE-demo-Lebohang-Loliwe-v2.mp4`, **2:52.40** (172.4 s), 1920×1080, SHA-256 `a5a039d8fa8942de34f058cfb75b583f59bb4d68be9b572204f169a5b980bbb7`, 64,255,277 bytes; public link: https://drive.google.com/file/d/1i6fWA3yl79tnMcR6s8-dd7De5x6zIhWY/view?usp=sharing (delivery copy, 9,339,219 bytes, SHA-256 `6d57fc9d3c4133098d68b6357560ab84b866b18efa2e063bcca86bc0cde3a7c3`, re-encoded from the master to fit the upload limit; same cut, mix and duration). Rendered on 2026/11/11 from fresh captures of current main against the synthetic starter dataset (explain line, 77-unit week view, "Do not release" SMS). Narration and sound effects: AI generated with ElevenLabs (voice: Claire), on a paid plan. It replaces the earlier 2:43.19 cut, whose narration was rejected. See [walkthrough details](docs/VIDEO_SCRIPT.md).
 Live demo: not hosted, by decision (the starter kit has no clear public redistribution right). Run locally; the demonstration captures the working application.
 
 ## How to run it
@@ -113,6 +113,7 @@ Built by Lebohang Loliwe, using AI coding agents under his direction.
 - **Claude (Anthropic), through the Quest assistant**: wrote most of the code, tests and docs under the entrant's direction, and analysed the dataset.
 - **Grok (xAI)**: compared options (which build, demo, branding, publication timing) and reviewed claims; Lebohang Loliwe made the final calls.
 - **ChatGPT and Codex (OpenAI)**: research, code, tests and browser checks under the entrant's direction.
+- **ElevenLabs**: the demo film's narration (voice: Claire), sound effects and, in the music variant, the instrumental score, all AI generated on a paid plan. Script written and approved by Lebohang Loliwe.
 Every number in this README was produced by the code in this repo (`python3 -m holdline.evaluate`).
 
 ## Bundled third-party material
